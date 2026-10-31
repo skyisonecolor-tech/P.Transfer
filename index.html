@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-BKVxsJGCzbNwPJhyDwiNaorq+cqMX2xvfrbAbzlPAqM='; style-src 'unsafe-inline'; connect-src 'none'; img-src data: blob:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Q1l4BjwdWqEH/BT9w+KTzKlJmjRnbQ/6dEfYnQqRe+4='; style-src 'unsafe-inline'; connect-src 'none'; img-src data: blob:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 <title>인사 발령 유인물</title>
@@ -563,7 +563,7 @@ function openSettings(tab){
   if(tab) settingsTab=tab;
   const close=()=>{ ov.remove(); renderApp(); };
   const nav=h('nav'); const pane=h('div',{class:'pane'});
-  const tabs=[['schools','학교 관리'],['subjects','교과'],['types','구분 (소요·발령)'],['notes','비고 항목'],['labels','메뉴명'],['stats','통계 기준'],['backup','저장·불러오기'],['roster','관내·청간 명부'],['pdf','청간 발령(PDF)'],['upload','파일 탑재'],['summary','통계 파일'],['reset','초기화']];
+  const tabs=[['schools','학교 관리'],['subjects','교과'],['types','구분 (소요·발령)'],['notes','비고 항목'],['labels','메뉴명'],['stats','통계 기준'],['backup','저장·불러오기'],['roster_g','관내 명부'],['roster_c','청간 명부'],['pdf','청간 발령(PDF)'],['upload','파일 탑재'],['summary','통계 파일'],['reset','초기화']];
   const draw=()=>{
     nav.replaceChildren(...tabs.map(([k,t])=>h('button',{class:k===settingsTab?'on':'',onclick:()=>{ settingsTab=k; draw(); }},t)));
     pane.replaceChildren(); (PANES[settingsTab]||PANES.schools)(pane, draw);
@@ -669,7 +669,8 @@ const PANES = {
   },
   backup(p, redraw){ renderBackupPane(p, redraw); },
   upload(p, redraw){ renderUploadPane(p, redraw); },
-  roster(p, redraw){ renderRosterPane(p, redraw); },
+  roster_g(p, redraw){ renderRosterPane(p, redraw, '관내'); },
+  roster_c(p, redraw){ renderRosterPane(p, redraw, '청간'); },
   pdf(p, redraw){ renderPdfPane(p, redraw); },
   summary(p, redraw){ renderSummaryPane(p, redraw); },
   reset(p, redraw){ renderResetPane(p, redraw); }
@@ -1010,14 +1011,16 @@ async function parseRoster(buf){
   throw new Error('명부 형식(「기관」「교과」 머리글)을 찾지 못했습니다.');
 }
 function rosterKey(r){ return [clean(r.subject),clean(r.reqType),clean(r.reqName)].join('|'); }
-function renderRosterPane(p, redraw){
-  p.append(h('h4',{text:'관내·청간 명부'}),
-    h('p',{class:'help',text:'관내 또는 청간 전보내신자 명부(.xlsx)를 올리면 「기관」(소속교) 열로 학교를 찾아 그 학교의 소요사항에 교과·구분·성명을 넣습니다. 구분은 관내 명부면 「관내」, 청간 명부면 「청간」입니다. 파일은 이 브라우저 안에서만 읽습니다.'}));
+function renderRosterPane(p, redraw, type){
+  const cnt=S.rosterRecs.filter(r=>r.type===type).length;
+  p.append(h('h4',{text:`${type} 명부`}),
+    h('p',{class:'help',text:`${type} 전보내신자 명부(.xlsx)를 올리면 「기관」(소속교) 열로 학교를 찾아 그 학교의 소요사항에 교과·성명과 구분 「${type}」을 넣습니다. 파일은 이 브라우저 안에서만 읽습니다.`}),
+    h('div',{class:'box'}, cnt? `저장된 ${type} 명부: ${cnt}명`+(S.rosterInfo?.[type]?` (${S.rosterInfo[type].fileName}, ${fmtDate(S.rosterInfo[type].savedAt)})`:'') : `아직 올린 ${type} 명부가 없습니다.`));
   const fi=h('input',{type:'file',accept:'.xlsx'}); const out=h('div');
   fi.addEventListener('change', async()=>{
     const f=fi.files[0]; if(!f) return; fi.value='';
     out.replaceChildren(h('p',{class:'small',text:'읽는 중…'}));
-    try{ showRosterPreview(out, await parseRoster(await f.arrayBuffer()), f.name, redraw); }
+    try{ showRosterPreview(out, await parseRoster(await f.arrayBuffer()), f.name, redraw, type); }
     catch(e){ console.error(e); out.replaceChildren(h('p',{style:'color:var(--danger)',text:'파일을 읽지 못했습니다: '+e.message})); }
   });
   p.append(h('div',{class:'row-btns'}, fi), out, fromStoreBox(redraw));
@@ -1035,9 +1038,8 @@ function renderRosterPane(p, redraw){
   box.append(list, h('datalist',{id:'dl-subjects'}, S.subjects.map(x=>h('option',{value:x}))));
   p.append(box);
 }
-function showRosterPreview(out, parsed, fileName, redraw){
-  const typeSel=h('select',null, h('option',{value:'관내'},'관내 명부 → 소요 구분 「관내」'), h('option',{value:'청간'},'청간 명부 → 소요 구분 「청간」'));
-  typeSel.value=parsed.guess;
+function showRosterPreview(out, parsed, fileName, redraw, fixedType){
+  const typeSel={value:fixedType};
   const mode=h('select',null,
     h('option',{value:'merge'},'추가 (이미 있는 같은 교과·구분·성명은 건너뜀)'),
     h('option',{value:'replace'},'교체 (명부에 나온 학교의 해당 구분 소요 행을 지우고 새로 넣음)'));
@@ -1079,6 +1081,7 @@ function showRosterPreview(out, parsed, fileName, redraw){
       h('div',{class:'row-btns'}, h('button',{class:'primary',onclick:()=>{
         if(mode.value==='replace' && totalDel && !confirm(`${plan.filter(x=>x.removed.length).length}개 학교에서 소요 구분 「${type}」 행 ${totalDel}개를 지우고 명부로 다시 넣습니다. 그 행에 입력한 발령사항도 함께 지워집니다. 계속할까요?`)) return;
         for(const s of newSubjects) if(!S.subjects.includes(s)) S.subjects.push(s);
+        S.rosterInfo={...(S.rosterInfo||{}), [type]:{fileName, savedAt:new Date().toISOString()}};
         S.rosterRecs=S.rosterRecs.filter(r=>r.type!==type).concat(parsed.recs.map(r=>({type, inst:clean(r.inst), subject:mapSubject(r.rawSubject), name:clean(r.name)})));
         for(const x of plan){
           const d=dataOf(x.id);
@@ -1090,8 +1093,9 @@ function showRosterPreview(out, parsed, fileName, redraw){
         area.replaceChildren(h('p',{text:`반영 완료: ${totalAdd}행 추가`+(totalDel?`, ${totalDel}행 교체`:'')+'. 설정을 닫으면 화면에 반영됩니다.'}));
       }},'소요사항에 반영')));
   };
-  typeSel.addEventListener('change',draw); mode.addEventListener('change',draw);
-  out.replaceChildren(h('div',{class:'form',style:'margin-top:10px'}, h('label',{text:'명부 종류'}), typeSel, h('label',{text:'반영 방식'}), mode), area);
+  mode.addEventListener('change',draw);
+  const warn = parsed.guess!==fixedType ? h('div',{class:'notice',style:'margin-top:10px',text:`주의: 이 파일은 희망지가 ${parsed.guess==='청간'?'교육지원청':'학교'}로 되어 있어 「${parsed.guess} 명부」로 보입니다. 맞는 탭에서 올렸는지 확인하세요.`}) : null;
+  out.replaceChildren(warn||'', h('div',{class:'form',style:'margin-top:10px'}, h('label',{text:'반영 방식'}), mode), area);
   draw();
 }
 
@@ -1175,6 +1179,11 @@ function renderPdfPane(p, redraw){
   if(pdfCache) showPdfPlan(out, redraw);
   p.append(fromStoreBox(redraw));
 }
+function unassignedType(){ return S.stats.unassigned || '미발령'; }
+// 발령 구분이 비어 있거나, 이전에 자동으로 넣은 미발령인 행만 바꿈(직접 입력한 발령사항은 보호)
+// PDF에 아예 없는 교과(예: 영양)는 판단할 수 없으므로 제외
+function pdfSubjectSet(){ return new Set((pdfCache?.records||[]).map(x=>mapSubject(x.subject))); }
+function canMarkUnassigned(r){ return !clean(r.resType) && (!pdfCache || pdfSubjectSet().has(clean(r.subject))); }
 function stripProvince(v){ return clean(v).replace(/^경기도(?=.+교육지원청$)/,''); }
 
 function buildPdfPlan(opts){
@@ -1208,7 +1217,7 @@ function buildPdfPlan(opts){
 }
 function showPdfPlan(out, redraw){
   const secs={}; for(const r of pdfCache.records) secs[r.section]=(secs[r.section]||0)+1;
-  const opts={sections:{}, strip:true, fillName:true, overwrite:true, addExtra:false};
+  const opts={sections:{}, strip:true, fillName:true, overwrite:true, addExtra:false, markUnassigned:true, dotTo:true};
   const secBox=h('div',{style:'display:grid;grid-template-columns:auto auto 1fr;gap:6px 12px;align-items:center;margin-top:6px'});
   for(const [name,n] of Object.entries(secs)){
     const [t,on]=PDF_SECTION_DEFAULT[name]||['청간',false];
@@ -1223,27 +1232,34 @@ function showPdfPlan(out, redraw){
     const plan=buildPdfPlan(opts);
     const sum=k=>plan.reduce((a,x)=>a+x[k].length,0);
     const totalMatch=sum('matches'), totalChange=plan.reduce((a,x)=>a+x.changes,0);
+    const subjSet=pdfSubjectSet(); const unassignable=plan.reduce((a,x)=>a+x.left.filter(canMarkUnassigned).length,0);
+    const notInPdf=[...new Set(plan.flatMap(x=>x.left.filter(r=>!clean(r.resType) && !subjSet.has(clean(r.subject))).map(r=>clean(r.subject)||'(교과 없음)')))];
     const byName=plan.reduce((a,x)=>a+x.matches.filter(m=>m.by==='name').length,0);
     const tb=h('tbody', null, plan.map(x=>h('tr',null, h('td',{text:x.sc.name}), h('td',{text:x.list.length}), h('td',{text:x.matches.length}), h('td',{text:x.changes||''}),
       h('td',{text:x.extra.length? x.extra.map(r=>`${r.subjectM}(${r.type})`).join(', '):'' ,style:'color:var(--warn)'}),
       h('td',{text:x.left.length? x.left.map(r=>`${r.subject||'-'}${r.reqName?' '+r.reqName:''}`).join(', '):'',style:'color:var(--muted)'}))));
     area.replaceChildren(
-      h('div',{class:'box'}, `PDF 발령자 중 전임지가 우리 학교인 사람 ${sum('list')}명 · 소요사항과 짝지음 ${totalMatch}명(성명 일치 ${byName}, 교과 순서 ${totalMatch-byName}) · 발령교가 새로 입력·변경될 행 ${totalChange}개`,
+      h('div',{class:'box'}, `PDF 발령자 중 전임지가 우리 학교인 사람 ${sum('list')}명 · 소요사항과 짝지음 ${totalMatch}명(성명 일치 ${byName}, 교과 순서 ${totalMatch-byName}) · 발령교가 새로 입력·변경될 행 ${totalChange}개`+(opts.markUnassigned?` · 「미발령」 입력될 행 ${unassignable}개`:''),
+        (opts.markUnassigned && notInPdf.length)? h('div',{class:'small',style:'color:var(--warn)',text:`PDF에 없는 교과(${notInPdf.join(', ')})는 미발령으로 표시하지 않습니다.`}) : null,
         h('div',{class:'small',text:'「소요에 없음」은 PDF에는 있지만 소요사항에 같은 교과·구분 행이 없는 경우, 「PDF에 없음」은 소요사항에는 있지만 PDF에서 찾지 못한 경우입니다(미발령 등).'})),
       h('div',{style:'max-height:360px;overflow:auto'}, h('table',{class:'imp-table'}, h('thead',null,h('tr',null,['학교','PDF 발령자','짝지음','변경','소요에 없음','PDF에 없음'].map(t=>h('th',{text:t})))), tb)),
-      h('div',{class:'row-btns'}, h('button',{class:'primary',disabled:!totalMatch && !(opts.addExtra && sum('extra')),onclick:()=>{
-        let changed=0, named=0, added=0;
+      h('div',{class:'row-btns'}, h('button',{class:'primary',disabled:!totalMatch && !(opts.addExtra && sum('extra')) && !(opts.markUnassigned && unassignable),onclick:()=>{
+        let changed=0, named=0, added=0, unassigned=0, revived=0;
         for(const x of plan){
           for(const m of x.matches){
             const nv=opts.strip?stripProvince(m.rec.newPlace):m.rec.newPlace;
             if(clean(m.row.reqTo)!==nv && (opts.overwrite || !clean(m.row.reqTo))){ m.row.reqTo=nv; changed++; }
             if(opts.fillName && !clean(m.row.reqName) && m.rec.name){ m.row.reqName=m.rec.name; named++; }
+            if(m.row.resTypeAuto==='미발령' && clean(m.row.resType)==='미발령'){ m.row.resType=''; m.row.resTypeAuto=''; revived++; } // 이제 PDF에 있으면 자동 미발령 해제
+          }
+          if(opts.markUnassigned) for(const r of x.left.filter(canMarkUnassigned)){
+            r.resType=unassignedType(); r.resTypeAuto=r.resType; if(opts.dotTo && !clean(r.reqTo)) r.reqTo='·'; unassigned++;
           }
           if(opts.addExtra) for(const r of x.extra){ dataOf(x.sc.id).rows.push({...blankRow(), subject:r.subjectM, reqType:r.type, reqName:r.name, reqTo:opts.strip?stripProvince(r.newPlace):r.newPlace}); added++; }
           if(S.data[x.sc.id]) S.data[x.sc.id].rows=sortRows(S.data[x.sc.id].rows.filter(rowFilled));
         }
         markChanged(); saveLocal();
-        toast(`발령교 ${changed}행 입력`+(named?`, 성명 ${named}명 입력`:'')+(added?`, 새 행 ${added}개 추가`:''));
+        toast(`발령교 ${changed}행 입력`+(named?`, 성명 ${named}명 입력`:'')+(added?`, 새 행 ${added}개 추가`:'')+(unassigned?`, 미발령 ${unassigned}행`:'')+(revived?`, 미발령 해제 ${revived}행`:''), 4000);
         draw();
       }},'소요사항 발령교에 반영')));
   };
@@ -1254,7 +1270,9 @@ function showPdfPlan(out, redraw){
         opt('strip','신임지 앞의 「경기도」 생략 (경기도수원교육지원청 → 수원교육지원청)'),
         opt('fillName','소요사항 성명이 비어 있으면 PDF의 성명도 함께 입력'),
         opt('overwrite','이미 입력된 발령교도 PDF 내용으로 바꿈'),
-        opt('addExtra','소요사항에 없는 발령자는 새 소요 행으로 추가'))),
+        opt('addExtra','소요사항에 없는 발령자는 새 소요 행으로 추가'),
+        opt('markUnassigned','PDF에 없는 소요 행(명부와 매칭 안 됨)은 발령사항 구분을 「미발령」으로 입력'),
+        opt('dotTo','  └ 미발령 행의 발령교 칸에 「·」 표시'))),
     area);
   draw();
 }
