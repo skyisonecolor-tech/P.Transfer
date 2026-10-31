@@ -1,0 +1,1810 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-BKVxsJGCzbNwPJhyDwiNaorq+cqMX2xvfrbAbzlPAqM='; style-src 'unsafe-inline'; connect-src 'none'; img-src data: blob:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>인사 발령 유인물</title>
+<style>
+:root{
+  --bg:#f4f5f7; --panel:#fff; --line:#d9dce1; --text:#1d2129; --muted:#6b7280;
+  --accent:#2f5bb7; --accent-soft:#e8eefb; --danger:#c0392b; --ok:#1e7d4f; --warn:#b26a00;
+  --blue:#dfe6f7; --yellow:#fff7cc;
+  font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-size:14px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 12px}
+button:hover{background:#f0f2f5}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover{background:#264c9c}
+button.danger{color:var(--danger);border-color:#e7b9b3}
+button.icon{padding:4px 8px;line-height:1}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=password],input:not([type]),select,textarea{border:1px solid var(--line);border-radius:5px;padding:5px 7px;background:#fff}
+input:focus,select:focus,textarea:focus{outline:2px solid #9db5ea;outline-offset:-1px}
+
+#app{display:grid;grid-template-rows:52px 1fr;height:100vh}
+header.top{display:flex;align-items:center;gap:8px;padding:0 14px;background:#fff;border-bottom:1px solid var(--line)}
+header.top h1{font-size:16px;margin:0 10px 0 0;white-space:nowrap}
+header.top .spacer{flex:1}
+.status{font-size:12px;padding:4px 10px;border-radius:999px;background:#eef0f3;color:var(--muted);white-space:nowrap}
+.status.saved{background:#e3f4ea;color:var(--ok)}
+.status.saving,.status.dirty{background:#fff4e0;color:var(--warn)}
+.status.error{background:#fbe7e5;color:var(--danger)}
+.gear{font-size:18px;padding:4px 10px}
+
+.body{display:grid;grid-template-columns:250px 1fr;min-height:0}
+aside.side{background:#fff;border-right:1px solid var(--line);overflow:auto;padding:10px 8px 30px}
+.side h2{font-size:12px;color:var(--muted);margin:14px 8px 6px;display:flex;justify-content:space-between}
+.side ul{list-style:none;margin:0;padding:0}
+.side li button{width:100%;text-align:left;border:0;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;background:transparent}
+.side li button:hover{background:#f2f4f7}
+.side li button.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.badge{font-size:11px;min-width:22px;text-align:center;border-radius:999px;background:#eef0f3;color:var(--muted);padding:1px 6px}
+.badge.over{background:#fff0d6;color:var(--warn)}
+
+main.main{overflow:auto;padding:18px 22px 60px}
+.school-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.school-head h2{margin:0;font-size:20px}
+.school-head .lv{color:var(--muted)}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 10px;align-items:center}
+.toolbar .note{color:var(--muted);font-size:12px}
+.notice{background:#fff8e6;border:1px solid #f1d9a6;color:#7a5200;padding:8px 12px;border-radius:6px;font-size:13px;margin-bottom:10px}
+
+table.ed{border-collapse:collapse;background:#fff;width:100%;min-width:1000px;table-layout:fixed}
+table.ed th,table.ed td{border:1px solid #c9cdd4;padding:0;height:30px}
+table.ed thead th{background:var(--blue);font-weight:600;font-size:13px;padding:4px;position:sticky;top:0;z-index:1}
+table.ed th.grp{border-bottom:1px solid #9aa4b5}
+table.ed td.no{background:var(--blue);text-align:center;width:42px;font-size:13px}
+table.ed td.req{background:var(--yellow)}
+table.ed td.sep, table.ed th.sep{border-left:2px solid #333}
+table.ed td input,table.ed td select{width:100%;border:0;border-radius:0;background:transparent;padding:4px 6px;height:30px;text-align:center}
+table.ed td input:focus,table.ed td select:focus{background:#fff;outline:2px solid #9db5ea}
+table.ed td input.auto{background:#e6f4ea}
+table.ed td.del{width:34px;text-align:center;border:0;background:transparent}
+table.ed td.del button{border:0;background:transparent;color:#999;padding:2px 6px}
+table.ed td.del button:hover{color:var(--danger)}
+.empty-row td{color:var(--muted);text-align:center;font-size:13px;height:44px}
+
+.stats{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px 10px;min-width:74px;text-align:center}
+.stat b{display:block;font-size:17px}
+.stat span{font-size:12px;color:var(--muted)}
+.notes{margin-top:14px}
+.notes label{font-weight:700;display:block;margin-bottom:4px}
+.note-lines{display:flex;flex-direction:column;gap:4px}
+.note-line{display:flex;gap:4px;align-items:center}
+.note-line .mark{width:18px;text-align:center;color:#555}
+.note-line input{flex:1}
+
+/* 모달 */
+.overlay{position:fixed;inset:0;background:rgba(20,24,33,.45);display:flex;align-items:center;justify-content:center;z-index:50}
+.modal{background:#fff;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.25);max-height:92vh;display:flex;flex-direction:column;overflow:hidden}
+.modal header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line)}
+.modal header h3{margin:0;font-size:16px}
+.settings{width:min(1100px,96vw);height:88vh}
+.settings .wrap{display:grid;grid-template-columns:180px 1fr;min-height:0;flex:1}
+.settings nav{border-right:1px solid var(--line);padding:8px;overflow:auto;background:#fafbfc}
+.settings nav button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:8px 10px;border-radius:6px}
+.settings nav button.on{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.settings .pane{padding:16px 20px;overflow:auto}
+.pane h4{margin:0 0 6px;font-size:15px}
+.pane p.help{color:var(--muted);margin:0 0 12px;font-size:13px;line-height:1.55}
+.list-ed{display:flex;flex-direction:column;gap:4px;max-width:520px}
+.list-ed .it{display:flex;gap:4px;align-items:center}
+.list-ed .it input{flex:1}
+.list-ed .it .idx{width:26px;color:var(--muted);font-size:12px;text-align:right}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+table.sch{border-collapse:collapse;width:100%;max-width:820px}
+table.sch th,table.sch td{border-bottom:1px solid #eceef1;padding:4px;text-align:left}
+table.sch th{font-size:12px;color:var(--muted);font-weight:600}
+.form{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;max-width:640px;align-items:center}
+.form label{font-size:13px;color:#374151}
+.form input{width:100%}
+.row-btns{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.box{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:12px 0;background:#fafbfc;font-size:13px;line-height:1.6}
+.box ol{margin:4px 0 0;padding-left:20px}
+.imp-table{border-collapse:collapse;margin-top:10px;font-size:13px}
+.imp-table th,.imp-table td{border:1px solid #e3e5e9;padding:4px 8px}
+.sum-table th{background:var(--blue);font-size:12px}
+.sum-table td{text-align:center}
+.small{font-size:12px;color:var(--muted)}
+.unlock{width:min(460px,94vw)}
+.unlock .content{padding:16px}
+.preview{width:min(900px,96vw);height:92vh}
+.preview .pv{flex:1;overflow:auto;background:#7c8088;padding:20px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.preview .page{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;z-index:99;opacity:.95}
+
+/* ===== 출력용 유인물 ===== */
+.page{width:190mm;height:267mm;overflow:hidden;position:relative}
+.sheet{width:190mm;transform-origin:top left}
+table.ho{border-collapse:collapse;table-layout:fixed;width:190mm;font-family:"Malgun Gothic","맑은 고딕",sans-serif;font-size:10pt;color:#000}
+table.ho td{border:0.6pt solid #000;padding:0 1.5pt;text-align:center;vertical-align:middle;white-space:nowrap;overflow:hidden;line-height:1.1}
+table.ho td.nb{border:none}
+table.ho td.bl{background:var(--blue)}
+table.ho td.ye{background:var(--yellow)}
+table.ho td.tl{border-left:1.6pt solid #000}
+table.ho td.tr{border-right:1.6pt solid #000}
+table.ho td.tt{border-top:1.6pt solid #000}
+table.ho td.tb{border-bottom:1.6pt solid #000}
+table.ho td.title{font-size:17pt;font-weight:700;letter-spacing:0;white-space:pre}
+table.ho td.wa{white-space:normal;word-break:break-all;line-height:1.25}
+table.ho td.sname{font-size:12pt;font-weight:700;text-align:left;padding-left:3pt}
+table.ho td.org{font-size:12pt;font-weight:700;text-align:right}
+table.ho td.wrap{white-space:normal;word-break:keep-all}
+table.ho td.notes{white-space:normal;text-align:left;vertical-align:middle;padding:2pt 4pt;word-break:keep-all}
+table.ho td.notes .nl{padding-left:1.1em;text-indent:-1.1em;line-height:1.35}
+#printArea{position:absolute;left:-100000px;top:0;visibility:hidden}
+
+@page{size:A4 portrait;margin:15mm 10mm}
+@media print{
+  html,body{background:#fff;height:auto}
+  #app,.overlay,.toast{display:none!important}
+  #printArea{position:static;visibility:visible}
+  #printArea .page{page-break-after:always;break-after:page}
+  #printArea .page:last-child{page-break-after:auto;break-after:auto}
+  table.ho td.bl,table.ho td.ye{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="printArea" aria-hidden="true"></div>
+<datalist id="dl-schools"></datalist>
+<datalist id="dl-notes"></datalist>
+<script>
+'use strict';
+/* =========================================================
+   인사 발령 유인물 웹앱
+   - 자료는 이 기기(브라우저)에만 저장, 외부 서버로 전송하지 않음(connect-src 'none')
+   - 다른 기기와는 백업 파일(.json, 선택 암호화) 또는 엑셀 파일로 주고받음
+   ========================================================= */
+
+/* ---------- 기본값 ---------- */
+const DEFAULT_TYPES = ['청간','관내','기간제','TO증','TO감','학교정원','신규','정년퇴직','명예퇴직','진로전담 선발','전문직','승진','타시도전출','타시도전입','휴직.면직','복직','파견','파견복귀','미발령'];
+const DEFAULT_SUBJECTS = ['국어','수학','영어','도덕윤리','일반사회','역사','지리','통합사회','물리','화학','생물','지구과학','통합과학','기술','가정','정보컴퓨터','체육','음악','미술','한문','일본어','중국어','러시아어','스페인어','진로진학상담','전문상담','보건','영양','사서','기계금속','전기전자통신','화공','화공섬유','미용','의상'];
+const DEFAULT_NOTES = ['정원외 기간제','미배치 기간제','초빙','관내동시내신'];
+const DEFAULT_SCHOOLS = [
+ ['mid','군서미래국제학교','군서미래국제'],['mid','군자중학교','군자중'],['mid','논곡중학교','논곡중'],['mid','대흥중학교','대흥중'],
+ ['mid','산현중학교','산현중'],['mid','배곧중학교','배곧중'],['mid','배곧라라중학교','배곧라라중'],['mid','배곧해솔중학교','배곧해솔중'],
+ ['mid','서해중학교','서해중'],['mid','소래중학교','소래중'],['mid','송운중학교','송운중'],['mid','시화나래중학교','시화나래중'],
+ ['mid','시화중학교','시화중'],['mid','시흥가온중학교','시흥가온중'],['mid','시흥능곡중학교','시흥능곡중'],['mid','시흥매화중학교','시흥매화중'],
+ ['mid','시흥은행중학교','시흥은행중'],['mid','시흥중학교','시흥중'],['mid','신천중학교','신천중'],['mid','연성중학교','연성중'],
+ ['mid','월곶중학교','월곶중'],['mid','은계중학교','은계중'],['mid','응곡중학교','응곡중'],['mid','장곡중학교','장곡중'],
+ ['mid','정왕중학교','정왕중'],['mid','조남중학교','조남중'],['mid','함현중학교','함현중'],
+ ['high','경기스마트고등학교','경스고'],['high','군서고등학교','군서고'],['high','군자디지털과학고등학교','군디과고'],['high','목감고등학교','목감고'],
+ ['high','배곧고등학교','배곧고'],['high','서해고등학교','서해고'],['high','소래고등학교','소래고'],['high','시흥고등학교','시흥고'],
+ ['high','시흥능곡고등학교','시흥능곡고'],['high','시흥매화고등학교','시흥매화고'],['high','신천고등학교','신천고'],['high','은행고등학교','은행고'],
+ ['high','장곡고등학교','장곡고'],['high','정왕고등학교','정왕고'],['high','함현고등학교','함현고'],
+ ['office','경기도시흥교육지원청','교육청']
+];
+const DEFAULT_ALIASES = [['상담','전문상담']];
+const LEVELS = [['mid','중학교'],['high','고등학교'],['office','교육청']];
+const DEFAULT_LABELS = {
+  title:'[  인     사     발     령     유     인     물  ]', org:'경기도시흥교육지원청', schoolLabel:'학교명',
+  no:'연번', reqGroup:'소요사항', resGroup:'발령사항',
+  reqSubject:'교과', reqType:'구분', reqName:'성명', reqTo:'발령교',
+  resType:'구분', resName:'성명', resFrom:'전임교', resNote:'비고',
+  stats:'통계자료', notes:'특이사항'
+};
+const LABEL_NAMES = {
+  title:'제목', org:'기관명(우측 상단)', schoolLabel:'학교명 머리글', no:'연번', reqGroup:'소요사항(묶음 제목)', resGroup:'발령사항(묶음 제목)',
+  reqSubject:'소요 - 교과', reqType:'소요 - 구분', reqName:'소요 - 성명', reqTo:'소요 - 발령교',
+  resType:'발령 - 구분', resName:'발령 - 성명', resFrom:'발령 - 전임교', resNote:'발령 - 비고', stats:'통계자료', notes:'특이사항'
+};
+const BASE_ROWS = 35;
+
+function defaultSummary(){
+  return {
+    title:'2026.3.1.자 중등교사 인사 현황', nameMode:'name', outLabel:'교사 전출', inLabel:'교사 전입', totalLabel:'계', balanceLabel:'결충원', excludeSubjects:['영양','사서'],
+    out:[
+      {label:'관내', req:['관내'], exclRes:['미발령']},
+      {label:'청간', req:['청간'], exclRes:['미발령']},
+      {label:'타시도 전출', req:['타시도전출'], exclRes:[]},
+      {label:'승진,전문직,\n명퇴,휴직,진로전담,\n파견', req:['승진','전문직','명예퇴직','휴직.면직','진로전담 선발','파견'], exclRes:[]},
+      {label:'결충원\n(증원+정원외)', req:['TO증','기간제','학교정원','정년퇴직'], exclRes:[], minusRes:['TO감']}
+    ],
+    in:[
+      {label:'관내', res:['관내']},
+      {label:'청간', res:['청간']},
+      {label:'타시도', res:['타시도전입']},
+      {label:'복직,복귀', res:['복직','파견복귀']},
+      {label:'신규', res:['신규'], exclNote:'수석'},
+      {label:'정원외', res:['기간제']},
+      {label:'수석신규', res:['신규'], note:'수석'}
+    ]
+  };
+}
+function uid(){ return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()).replace(/-/g,'').slice(0,16); }
+function defaultState(){
+  return {
+    format:'hr-handout-state', v:1,
+    labels:{...DEFAULT_LABELS},
+    schools: DEFAULT_SCHOOLS.map(([level,name,short])=>({id:uid(),level,name,short})),
+    subjects:[...DEFAULT_SUBJECTS],
+    reqTypes:[...DEFAULT_TYPES],
+    resTypes:[...DEFAULT_TYPES],
+    noteOptions:[...DEFAULT_NOTES],
+    subjectAliases: DEFAULT_ALIASES.map(([from,to])=>({from,to})),
+    rosterRecs:[], pdfRecs:[], pdfInfo:null,
+    summary: defaultSummary(),
+    stats:{ single:['관내','청간','파견복귀','타시도전입','복직','신규'], unassigned:'미발령', unassignedBy:['관내','청간'],
+            tempLabel:'기간제', temp:[{label:'정원외',match:'정원외 기간제'},{label:'미배치',match:'미배치 기간제'}] },
+    data:{}, updatedAt:null
+  };
+}
+function normalizeState(s){
+  const d = defaultState();
+  if(!s || typeof s!=='object') return d;
+  const out = {...d, ...s};
+  out.labels = {...d.labels, ...(s.labels||{})};
+  out.stats = {...d.stats, ...(s.stats||{})};
+  for(const k of ['subjects','reqTypes','resTypes','noteOptions']) if(!Array.isArray(out[k])) out[k]=d[k];
+  if(!Array.isArray(out.subjectAliases)) out.subjectAliases = d.subjectAliases;
+  if(!out.summary || !Array.isArray(out.summary.out)) out.summary=defaultSummary();
+  if(!Array.isArray(out.rosterRecs)) out.rosterRecs=[];
+  if(!Array.isArray(out.pdfRecs)) out.pdfRecs=[];
+  if(!Array.isArray(out.schools) || !out.schools.length) out.schools = d.schools;
+  if(!out.data || typeof out.data!=='object') out.data = {};
+  return out;
+}
+
+/* ---------- 상태 ---------- */
+let S = defaultState();
+let currentId = S.schools[0].id;
+let saveTimer=null, lastSavedAt=null, storageOk=true;
+
+const coll = new Intl.Collator('ko');
+const $ = (sel, el=document)=>el.querySelector(sel);
+function h(tag, attrs, ...kids){
+  const el = document.createElement(tag);
+  if(attrs) for(const [k,v] of Object.entries(attrs)){
+    if(v==null || v===false) continue;
+    if(k==='class') el.className=v;
+    else if(k==='text') el.textContent=v;
+    else if(k==='style') el.style.cssText=v;
+    else if(k==='value') el.value=v;
+    else if(k.startsWith('on') && typeof v==='function') el.addEventListener(k.slice(2), v);
+    else if(typeof v==='boolean') el[k]=v;
+    else el.setAttribute(k, v);
+  }
+  for(const kid of kids.flat(Infinity)){
+    if(kid==null || kid===false) continue;
+    el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+function makeSelect(options, value, onchange, cls){
+  const sel = h('select', {class:cls});
+  sel.append(h('option',{value:''},''));
+  const opts=[...options];
+  if(value && !opts.includes(value)) opts.push(value);
+  for(const o of opts) sel.append(h('option',{value:o},o));
+  sel.value = value||'';
+  if(onchange) sel.addEventListener('change', ()=>onchange(sel.value));
+  return sel;
+}
+function toast(msg, ms=2600){
+  const t=h('div',{class:'toast',text:msg}); document.body.append(t); setTimeout(()=>t.remove(), ms);
+}
+const clean = v => (v==null?'':String(v)).replace(/ /g,' ').trim();
+function schoolById(id){ return S.schools.find(s=>s.id===id); }
+function dataOf(id){ if(!S.data[id]) S.data[id]={rows:[],notes:''}; return S.data[id]; }
+function rowFilled(r){ return ['subject','reqType','reqName','reqTo','resType','resName','resFrom','note'].some(k=>clean(r[k])); }
+function filledRows(id){ return (S.data[id]?.rows||[]).filter(rowFilled); }
+
+/* ---------- 정렬 / 통계 ---------- */
+function idxMap(arr){ const m=new Map(); arr.forEach((v,i)=>{ if(!m.has(v)) m.set(v,i); }); return m; }
+function cmpByList(m, a, b){
+  a=a||''; b=b||'';
+  const ia = a ? (m.has(a)? m.get(a) : 1e5) : 1e6;
+  const ib = b ? (m.has(b)? m.get(b) : 1e5) : 1e6;
+  if(ia!==ib) return ia-ib;
+  return ia===1e5 ? coll.compare(a,b) : 0;
+}
+function sortRows(rows){
+  const sm=idxMap(S.subjects), tm=idxMap(S.reqTypes);
+  return rows.slice().sort((x,y)=> cmpByList(sm,x.subject,y.subject) || cmpByList(tm,x.reqType,y.reqType) || coll.compare(x.reqName||'', y.reqName||''));
+}
+function computeStats(rows){
+  const st=S.stats;
+  return {
+    single: st.single.slice(0,6).map(t=>({label:t||'', n:t?rows.filter(r=>clean(r.resType)===t).length:0})),
+    unassigned: st.unassignedBy.map(t=>({label:t, n:rows.filter(r=>clean(r.reqType)===t && clean(r.resType)===st.unassigned).length})),
+    temp: st.temp.map(x=>({label:x.label, n:rows.filter(r=>clean(r.note)===x.match).length}))
+  };
+}
+
+/* ---------- 변경 / 기기 저장 ---------- */
+const STORE_KEY='hrh.state.v1';
+function markChanged(){
+  S.updatedAt = new Date().toISOString();
+  clearTimeout(saveTimer); saveTimer=setTimeout(saveLocal, 300);
+}
+function saveLocal(){
+  clearTimeout(saveTimer);
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); storageOk=true; lastSavedAt=new Date(); }
+  catch(e){ storageOk=false; }
+  renderStatus();
+}
+function loadLocal(){
+  try{ const t=localStorage.getItem(STORE_KEY); if(t){ S=normalizeState(JSON.parse(t)); lastSavedAt=S.updatedAt?new Date(S.updatedAt):null; } }
+  catch(e){ storageOk=false; }
+}
+window.addEventListener('pagehide', ()=>{ if(saveTimer) saveLocal(); });
+window.addEventListener('storage', e=>{
+  // 같은 기기의 다른 탭에서 저장하면 반영
+  if(e.key===STORE_KEY && e.newValue){ try{ S=normalizeState(JSON.parse(e.newValue)); lastSavedAt=new Date(); renderApp(); toast('다른 탭에서 저장한 내용을 반영했습니다.'); }catch{} }
+});
+const hms=d=>[d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+function renderStatus(){
+  const el=$('#status'); if(!el) return;
+  if(!storageOk){ el.className='status error'; el.textContent='이 기기에 저장할 수 없음 · 백업 파일로 저장하세요'; return; }
+  el.className='status saved'; el.textContent='이 기기에 자동 저장' + (lastSavedAt? ' · '+hms(lastSavedAt) : '');
+}
+
+/* ---------- 렌더링: 앱 골격 ---------- */
+function renderApp(){
+  const app=$('#app'); app.replaceChildren();
+  app.append(
+    h('header',{class:'top'},
+      h('h1',{text:'인사 발령 유인물'}),
+      h('span',{id:'status',class:'status'}),
+      h('div',{class:'spacer'}),
+      h('button',{onclick:()=>openPreview([currentId])},'미리보기'),
+      h('button',{onclick:()=>printSchools([currentId])},'현재 학교 출력'),
+      h('button',{onclick:()=>printSchools(S.schools.map(s=>s.id))},'전체 출력'),
+      h('button',{class:'primary',onclick:downloadXlsx},'엑셀 다운로드'),
+      h('button',{class:'gear',title:'설정',onclick:()=>openSettings()},'⚙')
+    ),
+    h('div',{class:'body'}, h('aside',{class:'side',id:'side'}), h('main',{class:'main',id:'main'}))
+  );
+  renderDatalists(); renderSidebar(); renderMain(); renderStatus();
+}
+function renderDatalists(){
+  const ds=$('#dl-schools'); ds.replaceChildren(...S.schools.map(s=>h('option',{value:s.name})));
+  const dn=$('#dl-notes'); dn.replaceChildren(...S.noteOptions.map(n=>h('option',{value:n})));
+}
+function renderSidebar(){
+  const side=$('#side'); if(!side) return; side.replaceChildren();
+  if(!schoolById(currentId)) currentId = S.schools[0]?.id;
+  for(const [lv,lvName] of LEVELS){
+    const list=S.schools.filter(s=>s.level===lv);
+    if(!list.length) continue;
+    side.append(h('h2',null, h('span',{text:lvName}), h('span',{text: lv==='office'?'':list.length+'교'})));
+    side.append(h('ul',null, list.map(s=>{
+      const n=filledRows(s.id).length;
+      return h('li',null, h('button',{class: s.id===currentId?'on':'', onclick:()=>{ currentId=s.id; renderSidebar(); renderMain(); $('#main').scrollTop=0; }},
+        h('span',{text:s.name}), n? h('span',{class:'badge'+(n>BASE_ROWS?' over':''), text:n}) : null));
+    })));
+  }
+}
+function refreshCounts(){ renderSidebar(); renderStatsBox(); }
+
+/* ---------- 렌더링: 편집 화면 ---------- */
+function renderMain(){
+  const main=$('#main'); if(!main) return; main.replaceChildren();
+  const sc=schoolById(currentId); if(!sc){ main.append(h('p',{text:'학교가 없습니다. 설정에서 학교를 추가하세요.'})); return; }
+  const d=dataOf(sc.id); const L=S.labels;
+  main.append(h('div',{class:'school-head'},
+    h('h2',{text:sc.name}), h('span',{class:'lv',text:(LEVELS.find(l=>l[0]===sc.level)||['',''])[1]+' · 시트명 '+sc.short})));
+  if(!storageOk) main.append(h('div',{class:'notice',text:'이 브라우저에서는 기기 저장이 되지 않습니다(사생활 보호 모드 등). ⚙ 설정 → 저장·불러오기에서 백업 파일로 저장하세요.'}));
+  const n=filledRows(sc.id).length;
+  main.append(h('div',{class:'toolbar'},
+    h('button',{class:'primary',onclick:()=>{ d.rows.push(blankRow()); markChanged(); renderMain(); focusLastRow(); }},'+ 행 추가'),
+    h('button',{onclick:()=>{ const r=fillFromForSchools([sc.id]); renderMain(); toast(fillMsg(r), 4000); }},'전임교 자동 입력'),
+    h('button',{onclick:()=>{ d.rows=sortRows(d.rows.filter(rowFilled)); markChanged(); renderMain(); toast('교과 → 구분 → 성명 순으로 정렬했습니다.'); }},'정렬 (교과→구분→성명)'),
+    h('span',{class:'note',text: n>BASE_ROWS ? `입력 ${n}행 · 기본 틀(${BASE_ROWS}행)을 넘어 출력 시 한 장에 맞춰 줄 간격이 줄어듭니다.` : `입력 ${n}행 / 기본 틀 ${BASE_ROWS}행 · 출력과 엑셀은 자동으로 정렬됩니다.`})
+  ));
+  const thead=h('thead',null,
+    h('tr',null, h('th',{rowspan:2,text:L.no}), h('th',{colspan:4,class:'grp',text:L.reqGroup}), h('th',{colspan:4,class:'grp sep',text:L.resGroup}), h('th',{rowspan:2,style:'background:#fff;border:0'})),
+    h('tr',null, h('th',{text:L.reqSubject}), h('th',{text:L.reqType}), h('th',{text:L.reqName}), h('th',{text:L.reqTo}),
+                 h('th',{class:'sep',text:L.resType}), h('th',{text:L.resName}), h('th',{text:L.resFrom}), h('th',{text:L.resNote}))
+  );
+  const tbody=h('tbody');
+  d.rows.forEach((r,i)=>{
+    const set = k => v => { r[k]=v; markChanged(); refreshCounts(); };
+    const inp = (k, list) => { const el=h('input',{value:r[k]||'', list:list||null, autocomplete:'off', spellcheck:'false'}); el.addEventListener('input',()=>{ r[k]=el.value; markChanged(); }); el.addEventListener('change',()=>refreshCounts()); return el; };
+    const fromEl=inp('resFrom','dl-schools'); if(r.resFromAuto) fromEl.classList.add('auto'); fromEl.title=r.resFromAuto||'';
+    fromEl.addEventListener('input',()=>{ r.resFromAuto=''; fromEl.classList.remove('auto'); fromEl.title=''; });
+    const tryFill=()=>{ const res=autoFillFrom(r); if(res.changed){ fromEl.value=r.resFrom; fromEl.classList.add('auto'); fromEl.title=r.resFromAuto; markChanged(); toast(`전임교 자동 입력: ${r.resFrom} (${res.src})`); } else if(res.status==='multi') toast(`전임교 후보가 여러 곳입니다: ${res.places.join(', ')} — 직접 입력하세요.`, 4000); };
+    const nameEl=inp('resName'); nameEl.addEventListener('change',tryFill);
+    tbody.append(h('tr',{'data-row':r.id},
+      h('td',{class:'no',text:i+1}),
+      h('td',{class:'req'}, makeSelect(S.subjects, r.subject, v=>{ set('subject')(v); tryFill(); })),
+      h('td',{class:'req'}, makeSelect(S.reqTypes, r.reqType, set('reqType'))),
+      h('td',{class:'req'}, inp('reqName')),
+      h('td',{class:'req'}, inp('reqTo','dl-schools')),
+      h('td',{class:'sep'}, makeSelect(S.resTypes, r.resType, v=>{ set('resType')(v); tryFill(); })),
+      h('td',null, nameEl),
+      h('td',null, fromEl),
+      h('td',null, inp('note','dl-notes')),
+      h('td',{class:'del'}, h('button',{title:'행 삭제',onclick:()=>{ if(rowFilled(r) && !confirm(`${i+1}번 행을 삭제할까요?`)) return; d.rows.splice(i,1); markChanged(); renderMain(); renderSidebar(); }},'×'))
+    ));
+  });
+  if(!d.rows.length) tbody.append(h('tr',{class:'empty-row'}, h('td',{colspan:10,text:'입력된 내용이 없습니다. [+ 행 추가]를 눌러 시작하세요.'})));
+  const cg=h('colgroup',null,[42,118,104,96,170,104,96,170,140,34].map(w=>h('col',{style:`width:${w}px`})));
+  main.append(h('table',{class:'ed'}, cg, thead, tbody));
+  main.append(h('div',{id:'statsBox'}));
+  renderStatsBox();
+  main.append(renderNotesEditor(d));
+}
+// 특이사항: 한 줄 = 한 항목, 출력 시 각 줄 앞에 ▶
+const NOTE_MARK='▶';
+function noteLines(text){ return String(text||'').split(/\r?\n/).map(l=>l.replace(/^\s*[▶►▷]\s*/,'').trimEnd()).filter(l=>l.trim()); }
+function notesOut(text){ return noteLines(text).map(l=>NOTE_MARK+l).join('\n'); }
+function renderNotesEditor(d){
+  const box=h('div',{class:'notes'}); const L=S.labels;
+  const lines=noteLines(d.notes); if(!lines.length) lines.push('');
+  const draw=()=>{
+    if(!lines.length) lines.push('');
+    const save=()=>{ d.notes=lines.filter(l=>l.trim()).map(l=>NOTE_MARK+l.trim()).join('\n'); markChanged(); };
+    const list=h('div',{class:'note-lines'});
+    lines.forEach((l,i)=>{
+      const inp=h('input',{value:l,placeholder:'예) 영어 수석교사 추가인원.'});
+      inp.addEventListener('input',()=>{ lines[i]=inp.value; save(); });
+      inp.addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.isComposing){ e.preventDefault(); lines.splice(i+1,0,''); save(); draw(); box.querySelectorAll('.note-lines input')[i+1]?.focus(); }
+        if(e.key==='Backspace' && !inp.value && lines.length>1){ e.preventDefault(); lines.splice(i,1); save(); draw(); box.querySelectorAll('.note-lines input')[Math.max(0,i-1)]?.focus(); } });
+      list.append(h('div',{class:'note-line'}, h('span',{class:'mark',text:NOTE_MARK}), inp,
+        h('button',{class:'icon',title:'위로',disabled:i===0,onclick:()=>{ [lines[i-1],lines[i]]=[lines[i],lines[i-1]]; save(); draw(); }},'▲'),
+        h('button',{class:'icon',title:'아래로',disabled:i===lines.length-1,onclick:()=>{ [lines[i+1],lines[i]]=[lines[i],lines[i+1]]; save(); draw(); }},'▼'),
+        h('button',{class:'icon danger',title:'삭제',onclick:()=>{ lines.splice(i,1); save(); draw(); }},'삭제')));
+    });
+    box.replaceChildren(h('label',{text:L.notes}), list,
+      h('div',{class:'row-btns',style:'margin-top:6px'}, h('button',{onclick:()=>{ lines.push(''); save(); draw(); const ins=box.querySelectorAll('.note-lines input'); ins[ins.length-1]?.focus(); }},'+ 특이사항 줄 추가'),
+        h('span',{class:'small',text:'한 줄에 한 항목씩 씁니다(Enter: 다음 줄). 출력물에는 한 칸 안에 각 줄 앞 ▶ 표시로 들어갑니다.'})));
+  };
+  draw(); return box;
+}
+function blankRow(){ return {id:uid(),subject:'',reqType:'',reqName:'',reqTo:'',resType:'',resName:'',resFrom:'',note:''}; }
+function focusLastRow(){ const rows=document.querySelectorAll('table.ed tbody tr'); const last=rows[rows.length-1]; last?.querySelector('select')?.focus(); }
+function renderStatsBox(){
+  const box=$('#statsBox'); if(!box) return;
+  const st=computeStats(filledRows(currentId)); const S2=S.stats;
+  box.replaceChildren(h('div',{class:'stats'},
+    h('div',{class:'stat',style:'background:var(--blue)'}, h('b',{text:S.labels.stats}), h('span',{text:'발령사항 기준'})),
+    st.single.map(x=>h('div',{class:'stat'}, h('b',{text:x.n}), h('span',{text:x.label}))),
+    st.unassigned.map(x=>h('div',{class:'stat'}, h('b',{text:x.n}), h('span',{text:`${S2.unassigned}·${x.label}`}))),
+    st.temp.map(x=>h('div',{class:'stat'}, h('b',{text:x.n}), h('span',{text:`${S2.tempLabel}·${x.label}`})))
+  ));
+}
+
+/* ---------- 출력용 유인물 (HTML) ---------- */
+const COLW=[5.125,10,8.625,8.75,13.875,8.625,9.0039,7.25,7.25,7.25,7.25];
+const PT_PER_MM = 72/25.4;
+const PAGE_H_PT = 267*PT_PER_MM;
+const H = {title:24.9, gap:8.25, school:22.05, head:16.75, row:16.4, stat1:16.75, stat2:16.4, stat3:21, note:16.4};
+function buildPage(school){
+  const L=S.labels; const rows=sortRows(filledRows(school.id)); const notes=(S.data[school.id]?.notes)||'';
+  const n=Math.max(BASE_ROWS, rows.length);
+  const fixed=H.title+H.gap+H.school+H.head*2+H.stat1+H.stat2+H.stat3+H.note*3;
+  const rowH=Math.min(H.row, (PAGE_H_PT-fixed-2)/n);
+  const fs=Math.min(10, rowH*0.62);
+  const tot=COLW.reduce((a,b)=>a+b,0);
+  const tb=h('table',{class:'ho'}, h('colgroup',null, COLW.map(w=>h('col',{style:`width:${(w/tot*100).toFixed(3)}%`}))));
+  const tr=(ht,...cells)=>h('tr',{style:`height:${ht}pt`},...cells);
+  const td=(cls,text,attrs={})=>h('td',{class:cls,text:text??'',...attrs});
+  tb.append(
+    tr(H.title, td('nb'), td('nb title',L.title,{colspan:9}), td('nb')),
+    tr(H.gap, td('nb','',{colspan:11})),
+    tr(H.school, td('nb sname',L.schoolLabel,{colspan:2}), td('nb sname',school.name,{colspan:3}), td('nb'), td('nb org',L.org,{colspan:5})),
+    tr(H.head, td('bl tt tl',L.no,{rowspan:2}), td('bl tt',L.reqGroup,{colspan:4}), td('bl tt tl tr',L.resGroup,{colspan:6})),
+    tr(H.head, td('bl tb',L.reqSubject), td('bl tb',L.reqType), td('bl tb',L.reqName), td('bl tb',L.reqTo),
+       td('bl tb tl',L.resType), td('bl tb',L.resName), td('bl tb',L.resFrom,{colspan:2}), td('bl tb tr',L.resNote,{colspan:2}))
+  );
+  for(let i=0;i<n;i++){
+    const r=rows[i]||{};
+    const c = (cls,v,a)=>{ const e=td(cls+' fit',clean(v),a); e.style.fontSize=fs+'pt'; return e; };
+    tb.append(tr(rowH, c('bl tl',i+1), c('ye',r.subject), c('ye',r.reqType), c('ye',r.reqName), c('ye',r.reqTo),
+       c('tl',r.resType), c('',r.resName), c('',r.resFrom,{colspan:2}), c('tr',r.note,{colspan:2})));
+  }
+  const st=computeStats(rows); const S2=S.stats;
+  const r1=tr(H.stat1, td('bl tt tl wa',L.stats,{rowspan:3}));
+  st.single.slice(0,6).forEach(x=>r1.append(td('bl tt wrap',x.label,{rowspan:2})));
+  for(let k=st.single.length;k<6;k++) r1.append(td('bl tt','',{rowspan:2}));
+  r1.append(td('bl tt',S2.unassigned,{colspan:2}), td('bl tt tr',S2.tempLabel,{colspan:2}));
+  const r2=tr(H.stat2, td('bl',st.unassigned[0]?.label), td('bl',st.unassigned[1]?.label), td('bl',st.temp[0]?.label), td('bl tr',st.temp[1]?.label));
+  const r3=tr(H.stat3);
+  st.single.slice(0,6).forEach(x=>r3.append(td('',x.n)));
+  for(let k=st.single.length;k<6;k++) r3.append(td('',''));
+  r3.append(td('bl',st.unassigned[0]?.n), td('bl',st.unassigned[1]?.n), td('bl',st.temp[0]?.n), td('bl tr',st.temp[1]?.n));
+  tb.append(r1,r2,r3,
+    tr(H.note, td('bl tt tl tb wa',L.notes,{rowspan:3}), notesCell(notes)),
+    tr(H.note), tr(H.note));
+  const sheet=h('div',{class:'sheet'},tb);
+  return h('div',{class:'page'},sheet);
+}
+function notesCell(text){
+  const c=h('td',{class:'tt tr tb notes',colspan:10,rowspan:3});
+  for(const l of noteLines(text)) c.append(h('div',{class:'nl'}, h('span',{text:NOTE_MARK}), l));
+  return c;
+}
+function fitPages(container){
+  // 1) 칸 너비를 넘는 글자는 글자 크기를 줄여 맞춤
+  const cells=[...container.querySelectorAll('td.fit, td.sname, td.org')];
+  const over=cells.filter(c=>c.scrollWidth>c.clientWidth+0.5);
+  for(const c of over){
+    let fs=parseFloat(getComputedStyle(c).fontSize)*0.75; // px→pt
+    let guard=0;
+    while(c.scrollWidth>c.clientWidth+0.5 && fs>5 && guard++<30){ fs-=0.4; c.style.fontSize=fs+'pt'; }
+  }
+  // 2) 특이사항 등으로 한 장을 넘으면 전체를 축소
+  for(const p of container.querySelectorAll('.page')){
+    const sh=p.querySelector('.sheet'); sh.style.zoom='';
+    const ratio=p.clientHeight/sh.scrollHeight;
+    if(ratio<1) sh.style.zoom=String(Math.floor(ratio*1000)/1000);
+  }
+}
+function printSchools(ids){
+  const pa=$('#printArea'); pa.replaceChildren(...ids.map(id=>buildPage(schoolById(id))).filter(Boolean));
+  fitPages(pa);
+  setTimeout(()=>window.print(), 50);
+}
+window.addEventListener('afterprint', ()=>{ $('#printArea').replaceChildren(); });
+function openPreview(ids){
+  const pv=h('div',{class:'pv'});
+  const ov=h('div',{class:'overlay',onclick:e=>{ if(e.target===ov) ov.remove(); }},
+    h('div',{class:'modal preview'},
+      h('header',null, h('h3',{text:'미리보기 (A4 세로)'}), h('div',null, h('button',{class:'primary',onclick:()=>{ ov.remove(); printSchools(ids); }},'출력'),' ', h('button',{onclick:()=>ov.remove()},'닫기'))),
+      pv));
+  document.body.append(ov);
+  for(const id of ids){ const sc=schoolById(id); if(!sc) continue; pv.append(h('div',{style:'width:210mm;height:297mm;padding:15mm 10mm;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3);flex:none'}, buildPage(sc))); }
+  fitPages(pv);
+}
+
+/* ---------- 설정 모드 ---------- */
+let settingsTab='schools';
+function openSettings(tab){
+  if(tab) settingsTab=tab;
+  const close=()=>{ ov.remove(); renderApp(); };
+  const nav=h('nav'); const pane=h('div',{class:'pane'});
+  const tabs=[['schools','학교 관리'],['subjects','교과'],['types','구분 (소요·발령)'],['notes','비고 항목'],['labels','메뉴명'],['stats','통계 기준'],['backup','저장·불러오기'],['roster','관내·청간 명부'],['pdf','청간 발령(PDF)'],['upload','파일 탑재'],['summary','통계 파일'],['reset','초기화']];
+  const draw=()=>{
+    nav.replaceChildren(...tabs.map(([k,t])=>h('button',{class:k===settingsTab?'on':'',onclick:()=>{ settingsTab=k; draw(); }},t)));
+    pane.replaceChildren(); (PANES[settingsTab]||PANES.schools)(pane, draw);
+  };
+  const ov=h('div',{class:'overlay'},
+    h('div',{class:'modal settings'},
+      h('header',null, h('h3',{text:'⚙ 설정'}), h('button',{onclick:close},'닫기')),
+      h('div',{class:'wrap'}, nav, pane)));
+  document.body.append(ov); draw();
+}
+function renameInData(field, oldV, newV){
+  if(!oldV || oldV===newV) return 0; let n=0;
+  for(const d of Object.values(S.data)) for(const r of d.rows||[]) if(r[field]===oldV){ r[field]=newV; n++; }
+  return n;
+}
+function listEditor(arr, {onRename, onDelete, placeholder}={}, redraw){
+  const box=h('div',{class:'list-ed'});
+  arr.forEach((v,i)=>{
+    const inp=h('input',{value:v});
+    inp.addEventListener('change',()=>{
+      const nv=clean(inp.value); if(!nv){ inp.value=v; return; }
+      if(arr.includes(nv) && nv!==v){ toast('이미 있는 항목입니다.'); inp.value=v; return; }
+      arr[i]=nv; const n=onRename?onRename(v,nv):0; markChanged(); if(n) toast(`입력된 자료 ${n}건도 '${nv}'(으)로 바꿨습니다.`); redraw();
+    });
+    box.append(h('div',{class:'it'},
+      h('span',{class:'idx',text:i+1}), inp,
+      h('button',{class:'icon',title:'위로',disabled:i===0,onclick:()=>{ [arr[i-1],arr[i]]=[arr[i],arr[i-1]]; markChanged(); redraw(); }},'▲'),
+      h('button',{class:'icon',title:'아래로',disabled:i===arr.length-1,onclick:()=>{ [arr[i+1],arr[i]]=[arr[i],arr[i+1]]; markChanged(); redraw(); }},'▼'),
+      h('button',{class:'icon danger',title:'삭제',onclick:()=>{ if(!confirm(`'${v}' 항목을 목록에서 삭제할까요?\n(이미 입력된 자료의 값은 그대로 남습니다)`)) return; arr.splice(i,1); onDelete&&onDelete(v); markChanged(); redraw(); }},'삭제')));
+  });
+  const add=h('input',{placeholder:placeholder||'새 항목'});
+  const doAdd=()=>{ const nv=clean(add.value); if(!nv) return; if(arr.includes(nv)){ toast('이미 있는 항목입니다.'); return; } arr.push(nv); markChanged(); redraw(); };
+  add.addEventListener('keydown',e=>{ if(e.key==='Enter') doAdd(); });
+  box.append(h('div',{class:'it',style:'margin-top:6px'}, h('span',{class:'idx',text:'+'}), add, h('button',{class:'primary',onclick:doAdd},'추가')));
+  return box;
+}
+const PANES = {
+  schools(p, redraw){
+    p.append(h('h4',{text:'학교 관리'}), h('p',{class:'help',text:'왼쪽 목록에 보이는 학교입니다. 정식명칭은 화면·출력물에, 시트명은 엑셀 다운로드 시 시트 이름(31자 이내)으로 쓰입니다. 순서는 목록과 엑셀 시트 순서가 됩니다.'}));
+    const tb=h('tbody');
+    S.schools.forEach((s,i)=>{
+      const lv=h('select',null, LEVELS.map(([k,t])=>h('option',{value:k},t))); lv.value=s.level;
+      lv.addEventListener('change',()=>{ s.level=lv.value; markChanged(); });
+      const nm=h('input',{value:s.name,style:'width:240px'}); nm.addEventListener('change',()=>{ const v=clean(nm.value); if(!v){nm.value=s.name;return;} s.name=v; markChanged(); });
+      const sh=h('input',{value:s.short,style:'width:130px',maxlength:31}); sh.addEventListener('change',()=>{ const v=sanitizeSheetName(sh.value); if(!v){sh.value=s.short;return;} s.short=v; sh.value=v; markChanged(); });
+      const cnt=filledRows(s.id).length;
+      tb.append(h('tr',null, h('td',{class:'small',text:i+1}), h('td',null,lv), h('td',null,nm), h('td',null,sh), h('td',{class:'small',text:cnt?cnt+'행':''}),
+        h('td',null,
+          h('button',{class:'icon',disabled:i===0,onclick:()=>{ [S.schools[i-1],S.schools[i]]=[S.schools[i],S.schools[i-1]]; markChanged(); redraw(); }},'▲'),' ',
+          h('button',{class:'icon',disabled:i===S.schools.length-1,onclick:()=>{ [S.schools[i+1],S.schools[i]]=[S.schools[i],S.schools[i+1]]; markChanged(); redraw(); }},'▼'),' ',
+          h('button',{class:'icon danger',onclick:()=>{ if(!confirm(`'${s.name}'을(를) 삭제할까요?`+(cnt?`\n입력된 ${cnt}행도 함께 삭제됩니다.`:''))) return; S.schools.splice(i,1); delete S.data[s.id]; markChanged(); redraw(); }},'삭제'))));
+    });
+    p.append(h('table',{class:'sch'}, h('thead',null,h('tr',null,['#','학교급','정식명칭','시트명','자료',''].map(t=>h('th',{text:t})))), tb));
+    const lv=h('select',null, LEVELS.map(([k,t])=>h('option',{value:k},t)));
+    const nm=h('input',{placeholder:'예) ○○중학교',style:'width:240px'}); const sh=h('input',{placeholder:'예) ○○중',style:'width:130px'});
+    p.append(h('div',{class:'row-btns'}, lv, nm, sh, h('button',{class:'primary',onclick:()=>{
+      const name=clean(nm.value); if(!name) return toast('정식명칭을 입력하세요.');
+      if(S.schools.some(s=>s.name===name)) return toast('이미 있는 학교입니다.');
+      S.schools.push({id:uid(),level:lv.value,name,short:sanitizeSheetName(sh.value)||sanitizeSheetName(name)}); markChanged(); redraw(); }},'학교 추가')));
+    p.append(h('div',{class:'row-btns'}, h('button',{onclick:()=>{ const order=new Map(LEVELS.map((l,i)=>[l[0],i])); S.schools.sort((a,b)=>(order.get(a.level)-order.get(b.level))||coll.compare(a.name,b.name)); markChanged(); redraw(); }},'학교급별 가나다순 정렬')));
+  },
+  subjects(p, redraw){
+    p.append(h('h4',{text:'교과'}), h('p',{class:'help',text:'소요사항의 교과 선택 목록입니다. 이 목록의 순서가 정렬 1순위(교과) 기준이 됩니다. 이름을 바꾸면 이미 입력된 자료도 함께 바뀝니다.'}));
+    p.append(listEditor(S.subjects,{onRename:(o,n)=>renameInData('subject',o,n),placeholder:'새 교과명'},redraw));
+  },
+  types(p, redraw){
+    p.append(h('h4',{text:'구분'}), h('p',{class:'help',text:'기본값은 원본 엑셀의 구분 목록(M열)입니다. 소요사항 구분 목록의 순서가 정렬 2순위(구분) 기준이 됩니다. 이름을 바꾸면 입력된 자료와 통계 기준도 함께 바뀝니다.'}));
+    const renRes=(o,n)=>{ const st=S.stats; st.single=st.single.map(x=>x===o?n:x); if(st.unassigned===o) st.unassigned=n; return renameInData('resType',o,n); };
+    const renReq=(o,n)=>{ const st=S.stats; st.unassignedBy=st.unassignedBy.map(x=>x===o?n:x); return renameInData('reqType',o,n); };
+    p.append(h('div',{class:'cols2'},
+      h('div',null, h('h4',{text:'소요사항 구분'}), listEditor(S.reqTypes,{onRename:renReq},redraw)),
+      h('div',null, h('h4',{text:'발령사항 구분'}), listEditor(S.resTypes,{onRename:renRes},redraw))));
+  },
+  notes(p, redraw){
+    p.append(h('h4',{text:'비고 항목'}), h('p',{class:'help',text:'발령사항 비고 칸의 추천 목록입니다(목록에 없는 내용도 직접 입력할 수 있습니다). 통계의 정원외·미배치 기간제는 이 값과 정확히 같은 비고를 셉니다.'}));
+    p.append(listEditor(S.noteOptions,{onRename:(o,n)=>{ S.stats.temp.forEach(t=>{ if(t.match===o) t.match=n; }); return renameInData('note',o,n); }},redraw));
+  },
+  labels(p, redraw){
+    p.append(h('h4',{text:'메뉴명'}), h('p',{class:'help',text:'편집 화면, 출력물, 엑셀 파일의 제목·머리글에 쓰이는 이름입니다.'}));
+    const f=h('div',{class:'form'});
+    for(const [k,name] of Object.entries(LABEL_NAMES)){
+      const inp=h('input',{value:S.labels[k]}); inp.addEventListener('change',()=>{ S.labels[k]=inp.value; markChanged(); });
+      f.append(h('label',{text:name}), inp);
+    }
+    p.append(f, h('div',{class:'row-btns'}, h('button',{onclick:()=>{ if(!confirm('메뉴명을 기본값으로 되돌릴까요?')) return; S.labels={...DEFAULT_LABELS}; markChanged(); redraw(); }},'기본값으로')));
+  },
+  stats(p, redraw){
+    p.append(h('h4',{text:'통계 기준'}), h('p',{class:'help',text:'통계는 발령사항을 기준으로 계산합니다(원본 엑셀 수식과 동일). ① 6칸: 발령 구분별 인원 ② 미발령: 소요 구분이 관내/청간이면서 발령 구분이 미발령인 인원 ③ 기간제: 비고가 정원외 기간제/미배치 기간제인 인원'}));
+    const st=S.stats; const f=h('div',{class:'form'});
+    for(let i=0;i<6;i++){ f.append(h('label',{text:`발령 구분 칸 ${i+1}`}), makeSelect(S.resTypes, st.single[i]||'', v=>{ while(st.single.length<6) st.single.push(''); st.single[i]=v; markChanged(); })); }
+    f.append(h('label',{text:'미발령 기준 구분(발령)'}), makeSelect(S.resTypes, st.unassigned, v=>{ st.unassigned=v; markChanged(); }));
+    for(let i=0;i<2;i++) f.append(h('label',{text:`미발령 세부 ${i+1}(소요 구분)`}), makeSelect(S.reqTypes, st.unassignedBy[i]||'', v=>{ st.unassignedBy[i]=v; markChanged(); }));
+    const tl=h('input',{value:st.tempLabel}); tl.addEventListener('change',()=>{ st.tempLabel=tl.value; markChanged(); });
+    f.append(h('label',{text:'기간제 묶음 제목'}), tl);
+    st.temp.forEach((t,i)=>{
+      const a=h('input',{value:t.label}); a.addEventListener('change',()=>{ t.label=a.value; markChanged(); });
+      const b=h('input',{value:t.match,list:'dl-notes'}); b.addEventListener('change',()=>{ t.match=clean(b.value); markChanged(); });
+      f.append(h('label',{text:`기간제 세부 ${i+1} 이름`}), a, h('label',{text:`  └ 셀 비고 값`}), b);
+    });
+    p.append(f);
+    p.querySelectorAll('select').forEach(sel=>sel.style.width='100%');
+    p.append(h('div',{class:'row-btns'}, h('button',{onclick:()=>{ S.stats=defaultState().stats; markChanged(); redraw(); }},'기본값으로')));
+  },
+  backup(p, redraw){ renderBackupPane(p, redraw); },
+  upload(p, redraw){ renderUploadPane(p, redraw); },
+  roster(p, redraw){ renderRosterPane(p, redraw); },
+  pdf(p, redraw){ renderPdfPane(p, redraw); },
+  summary(p, redraw){ renderSummaryPane(p, redraw); },
+  reset(p, redraw){ renderResetPane(p, redraw); }
+};
+function sanitizeSheetName(s){ return clean(s).replace(/[\[\]:*?\/\\]/g,'').replace(/^'+|'+$/g,'').slice(0,31); }
+
+/* ---------- 파일 탑재 / 저장·불러오기 ---------- */
+function excelImporter(){
+  const fi=h('input',{type:'file',accept:'.xlsx'});
+  const out=h('div');
+  fi.addEventListener('change', async ()=>{
+    const file=fi.files[0]; if(!file) return;
+    out.replaceChildren(h('p',{class:'small',text:'읽는 중…'}));
+    try{ const parsed=await parseHandoutWorkbook(await file.arrayBuffer()); fi.value=''; showImportPreview(out, parsed); }
+    catch(e){ console.error(e); fi.value=''; out.replaceChildren(h('p',{style:'color:var(--danger)',text:'파일을 읽지 못했습니다: '+e.message})); }
+  });
+  return h('div',null, h('div',{class:'row-btns'}, fi), out);
+}
+function renderUploadPane(p){
+  p.append(h('h4',{text:'파일 탑재'}),
+    h('p',{class:'help',text:'엑셀(.xlsx)을 올려 자료를 탑재합니다. 이 웹에서 내려받은 엑셀이면 설정(학교·교과·구분·메뉴명 등)까지 그대로 복원되고, 기존 양식으로 만든 엑셀이면 각 시트의 학교명 칸(C3)으로 학교를 찾아 자료를 넣습니다. 파일은 이 브라우저 안에서만 읽습니다.'}),
+    excelImporter());
+  p.append(h('div',{class:'box'}, h('b',{text:'추후 기능 자리'}), h('div',{text:'양식 파일 탑재 등 앞으로 추가될 파일 기반 기능이 이곳에 들어갑니다.'})));
+}
+function showImportPreview(out, parsed){
+  const {sheets, settings}=parsed;
+  const base = settings ? normalizeState({...settings, data:{}}) : null;
+  const pool = base ? base.schools : S.schools;
+  const tb=h('tbody');
+  for(const sh of sheets){
+    sh.match = pool.find(s=>s.sheet && s.sheet===sh.sheet) || pool.find(s=>s.name===sh.school) || pool.find(s=>s.short===sh.sheet);
+    tb.append(h('tr',null, h('td',{text:sh.sheet}), h('td',{text:sh.school||'(학교명 없음)'}), h('td',{text: sh.match? '기존 학교' : '새 학교로 추가'}), h('td',{text:sh.rows.length+'행'}), h('td',{text:sh.notes?'있음':''})));
+  }
+  const total=sheets.reduce((a,s)=>a+s.rows.length,0);
+  const addLists=h('input',{type:'checkbox',checked:true});
+  const full=h('input',{type:'checkbox',checked:!!settings});
+  const opts = settings
+    ? h('label',{class:'small',style:'display:flex;gap:6px;align-items:center;margin-top:8px'}, full, '이 파일의 설정까지 그대로 복원 (끄면 자료만 넣고 지금 설정은 유지)')
+    : h('label',{class:'small',style:'display:flex;gap:6px;align-items:center;margin-top:8px'}, addLists, '목록에 없는 교과·구분·비고 값은 설정 목록에 자동 추가');
+  out.replaceChildren(
+    h('div',{class:'box'}, settings ? `이 웹에서 내려받은 엑셀입니다 (저장 시각: ${fmtDate(settings.updatedAt)}).` : '일반 양식 엑셀입니다.',
+      h('br'), `시트 ${sheets.length}개 · 자료 ${total}행을 찾았습니다. [적용]을 누르면 파일에 있는 학교의 자료가 이 파일 내용으로 바뀝니다.`),
+    h('table',{class:'imp-table'}, h('thead',null,h('tr',null,['시트명','학교명(C3)','처리','자료','특이사항'].map(t=>h('th',{text:t})))), tb),
+    opts,
+    h('div',{class:'row-btns'}, h('button',{class:'primary',onclick:()=>{
+      if(settings && full.checked){
+        const ns=base; ns.updatedAt=settings.updatedAt;
+        for(const sh of sheets){
+          let sc=sh.match; if(!sc){ if(!sh.school) continue; sc={id:uid(),level:guessLevel(sh.school),name:sh.school,short:sanitizeSheetName(sh.sheet)}; ns.schools.push(sc); }
+          ns.data[sc.id]={rows:sh.rows.map(r=>({id:uid(),...r})), notes:sh.notes||''};
+        }
+        ns.schools.forEach(s=>delete s.sheet);
+        S=ns; currentId=S.schools[0]?.id;
+      }else{
+        for(const sh of sheets){
+          let sc = settings ? (S.schools.find(s=>s.name===sh.school)||S.schools.find(s=>s.short===sh.sheet)) : sh.match;
+          if(!sc){ if(!sh.school) continue; sc={id:uid(),level:guessLevel(sh.school),name:sh.school,short:sanitizeSheetName(sh.sheet)||sanitizeSheetName(sh.school)}; S.schools.push(sc); }
+          S.data[sc.id]={rows:sh.rows.map(r=>({id:uid(),...r})), notes:sh.notes||''};
+          if(settings || addLists.checked) for(const r of sh.rows){
+            if(r.subject && !S.subjects.includes(r.subject)) S.subjects.push(r.subject);
+            if(r.reqType && !S.reqTypes.includes(r.reqType)) S.reqTypes.push(r.reqType);
+            if(r.resType && !S.resTypes.includes(r.resType)) S.resTypes.push(r.resType);
+            if(r.note && !S.noteOptions.includes(r.note) && /기간제|초빙|내신/.test(r.note)) S.noteOptions.push(r.note);
+          }
+        }
+      }
+      markChanged(); saveLocal(); toast('불러온 내용을 적용했습니다.');
+      out.replaceChildren(h('p',{text:'적용 완료. 설정을 닫으면 화면에 반영됩니다.'}));
+    }},'적용')));
+}
+function guessLevel(name){ if(/고등학교$/.test(name)) return 'high'; if(/교육지원청$|교육청$/.test(name)) return 'office'; return 'mid'; }
+function fmtDate(iso){ if(!iso) return '알 수 없음'; const d=new Date(iso); if(isNaN(d)) return '알 수 없음'; return `${d.getFullYear()}.${d.getMonth()+1}.${d.getDate()}. ${hms(d)}`; }
+function stamp(){ const d=new Date(), p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`; }
+function saveBlob(blob, name){ const url=URL.createObjectURL(blob); const a=h('a',{href:url,download:name}); document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),4000); }
+
+function renderBackupPane(p){
+  p.append(h('h4',{text:'저장·불러오기'}),
+    h('p',{class:'help',text:`작업 내용은 이 기기(브라우저)에 자동 저장됩니다(마지막 저장: ${lastSavedAt?fmtDate(lastSavedAt.toISOString()):'없음'}). 다른 기기에서 이어서 작업하려면 아래 두 방법 중 하나로 파일을 옮기세요.`}));
+  // 방법 1: 백업 파일
+  const pw=h('input',{type:'password',placeholder:'비밀번호(선택)',autocomplete:'new-password',style:'width:220px'});
+  const pw2=h('input',{type:'password',placeholder:'비밀번호 확인',autocomplete:'new-password',style:'width:220px'});
+  const msg=h('p',{class:'small'});
+  const saveBtn=h('button',{class:'primary',onclick:async()=>{
+    msg.style.color=''; msg.textContent='';
+    if(pw.value!==pw2.value){ msg.style.color='var(--danger)'; msg.textContent='비밀번호 확인이 일치하지 않습니다.'; return; }
+    saveBtn.disabled=true;
+    try{
+      const payload={format:'hr-handout-backup',v:1,savedAt:new Date().toISOString(),state:S};
+      const text = pw.value ? await encryptJson(payload, pw.value) : JSON.stringify(payload);
+      saveBlob(new Blob([text],{type:'application/json'}), `인사발령유인물_백업_${stamp()}${pw.value?'_암호':''}.json`);
+      msg.textContent = pw.value ? '암호화된 백업 파일을 저장했습니다. 비밀번호를 잊으면 열 수 없습니다.' : '백업 파일을 저장했습니다. 개인정보가 들어 있으니 보관에 유의하세요.';
+      pw.value=''; pw2.value='';
+    }catch(e){ msg.style.color='var(--danger)'; msg.textContent='저장하지 못했습니다: '+e.message; }
+    finally{ saveBtn.disabled=false; }
+  }},'백업 파일 저장');
+  const fi=h('input',{type:'file',accept:'.json,application/json'});
+  const loadOut=h('div');
+  fi.addEventListener('change', async()=>{
+    const f=fi.files[0]; if(!f) return; fi.value='';
+    loadOut.replaceChildren();
+    let obj; try{ obj=JSON.parse(await f.text()); }catch{ loadOut.append(h('p',{style:'color:var(--danger)',text:'백업 파일 형식이 아닙니다.'})); return; }
+    const apply=payload=>{
+      if(payload?.format!=='hr-handout-backup' || !payload.state){ loadOut.replaceChildren(h('p',{style:'color:var(--danger)',text:'이 웹앱의 백업 파일이 아닙니다.'})); return; }
+      const ns=normalizeState(payload.state);
+      const n=ns.schools.reduce((a,s)=>a+((ns.data[s.id]?.rows)||[]).filter(rowFilled).length,0);
+      if(!confirm(`백업 파일(저장 시각 ${fmtDate(payload.savedAt)}, 자료 ${n}행)로 지금 이 기기의 내용을 모두 바꿀까요?\n이 기기의 마지막 저장: ${lastSavedAt?fmtDate(lastSavedAt.toISOString()):'없음'}`)) return;
+      S=ns; currentId=S.schools[0]?.id; saveLocal(); loadOut.replaceChildren(h('p',{text:'불러오기 완료. 설정을 닫으면 화면에 반영됩니다.'}));
+    };
+    if(obj?.format==='hr-handout-backup-encrypted'){
+      const ip=h('input',{type:'password',placeholder:'백업 비밀번호',autocomplete:'off',style:'width:220px'});
+      const em=h('span',{class:'small',style:'color:var(--danger);margin-left:8px'});
+      const go=async()=>{ try{ apply(await decryptJson(obj, ip.value)); }catch(e){ em.textContent=e.message; } };
+      ip.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); });
+      loadOut.append(h('div',{class:'row-btns'}, ip, h('button',{class:'primary',onclick:go},'열기'), em)); ip.focus();
+    } else apply(obj);
+  });
+  p.append(h('div',{class:'box'},
+    h('b',{text:'방법 1. 백업 파일 (.json) — 자료와 설정 전체를 그대로 옮김'}),
+    h('div',{class:'small',text:'비밀번호를 넣으면 암호화(AES-256)되어 USB·메일로 옮겨도 내용을 볼 수 없습니다. 비워 두면 암호화하지 않습니다.'}),
+    h('div',{class:'row-btns'}, pw, pw2, saveBtn), msg,
+    h('div',{style:'margin-top:10px'}, h('b',{text:'백업 파일 불러오기'})), h('div',{class:'row-btns'}, fi), loadOut));
+  p.append(h('div',{class:'box'},
+    h('b',{text:'방법 2. 엑셀 파일 (.xlsx) — 출력용 엑셀로 옮김'}),
+    h('div',{class:'small',text:'이 웹에서 내려받은 엑셀에는 설정 정보가 숨김 시트로 들어 있어, 다른 기기에서 그 엑셀을 올리면 작업 내용과 설정이 그대로 탑재됩니다. 엑셀에서 직접 고친 내용도 반영됩니다(행 추가는 통계자료 위까지).'}),
+    h('div',{class:'row-btns'}, h('button',{class:'primary',onclick:downloadXlsx},'엑셀 다운로드')),
+    h('div',{style:'margin-top:10px'}, h('b',{text:'엑셀 불러오기'})), excelImporter()));
+}
+/* ---------- 통계 파일 (학교별 전출·전입 현황) ---------- */
+function summaryRows(){
+  const sm=S.summary; const ex=new Set(sm.excludeSubjects||[]);
+  return S.schools.map(sc=>{
+    const R=filledRows(sc.id).filter(r=>!ex.has(clean(r.subject)));
+    const outV=sm.out.map(c=>{
+      let n=R.filter(r=>c.req.includes(clean(r.reqType)) && !(c.exclRes||[]).includes(clean(r.resType))).length;
+      if(c.minusRes?.length) n-=R.filter(r=>c.minusRes.includes(clean(r.resType))).length;
+      return n; });
+    const inV=sm.in.map(c=>R.filter(r=>c.res.includes(clean(r.resType)) && (!c.note || clean(r.note).includes(c.note)) && (!c.exclNote || !clean(r.note).includes(c.exclNote))).length);
+    const outSum=outV.reduce((a,b)=>a+b,0), inSum=inV.reduce((a,b)=>a+b,0);
+    return {sc, name: sm.nameMode==='short'? sc.short : sc.name, outV, inV, outSum, inSum, bal:inSum-outSum};
+  });
+}
+function renderSummaryPane(p, redraw){
+  const sm=S.summary;
+  p.append(h('h4',{text:'통계 파일'}),
+    h('p',{class:'help',text:'학교별 교사 전출(소요사항 기준)·전입(발령사항 기준) 현황을 엑셀로 내려받습니다. 결충원 확인 열은 「전입 계 − 전출 계」이며 0이 아니면 표에 빨간색으로 표시됩니다.'}));
+  const title=h('input',{value:sm.title,style:'width:340px'}); title.addEventListener('change',()=>{ sm.title=title.value; markChanged(); });
+  const nm=h('select',null,h('option',{value:'name'},'정식명칭 (○○중학교)'),h('option',{value:'short'},'시트명 (○○중)')); nm.value=sm.nameMode; nm.addEventListener('change',()=>{ sm.nameMode=nm.value; markChanged(); redraw(); });
+  p.append(h('div',{class:'form'}, h('label',{text:'제목'}), title, h('label',{text:'학교명 표시'}), nm),
+    h('div',{class:'row-btns'}, h('button',{class:'primary',onclick:downloadSummaryXlsx},'통계 파일 다운로드 (.xlsx)')));
+  // 미리보기
+  const rows=summaryRows(); const tot=k=>rows.reduce((a,r)=>a+(typeof k==='function'?k(r):r[k]),0);
+  const head1=h('tr',null, h('th',{rowspan:2,text:'연번'}), h('th',{rowspan:2,text:'학교명'}), h('th',{colspan:sm.out.length+1,text:sm.outLabel}), h('th',{colspan:sm.in.length+1,text:sm.inLabel}), h('th',{rowspan:2,text:sm.balanceLabel}));
+  const head2=h('tr',null, sm.out.map(c=>h('th',{style:'white-space:pre-line',text:c.label})), h('th',{text:sm.totalLabel}), sm.in.map(c=>h('th',{style:'white-space:pre-line',text:c.label})), h('th',{text:sm.totalLabel}));
+  const z=v=>v? v : '';
+  const body=h('tbody',null, rows.map((r,i)=>h('tr',null, h('td',{text:i+1}), h('td',{style:'text-align:left',text:r.name}), r.outV.map(v=>h('td',{text:z(v)})), h('td',{style:'font-weight:700',text:r.outSum}), r.inV.map(v=>h('td',{text:z(v)})), h('td',{style:'font-weight:700',text:r.inSum}), h('td',{style:r.bal?'color:var(--danger);font-weight:700':'',text:r.bal}))),
+    h('tr',{style:'font-weight:700;background:#f3f5f8'}, h('td',{colspan:2,text:sm.totalLabel}), sm.out.map((c,k)=>h('td',{text:tot(r=>r.outV[k])})), h('td',{text:tot('outSum')}), sm.in.map((c,k)=>h('td',{text:tot(r=>r.inV[k])})), h('td',{text:tot('inSum')}), h('td',{text:tot('bal')})));
+  const bad=rows.filter(r=>r.bal);
+  p.append(h('div',{class:'box'}, bad.length? h('span',{style:'color:var(--danger)',text:`전입·전출 계가 맞지 않는 학교 ${bad.length}곳: ${bad.map(r=>r.name+'('+(r.bal>0?'+':'')+r.bal+')').join(', ')}`}) : '모든 학교의 전입 계와 전출 계가 같습니다.'),
+    h('div',{style:'overflow:auto;max-height:420px'}, h('table',{class:'imp-table sum-table'}, h('thead',null,head1,head2), body)));
+  // 계산 기준
+  const chips=(arr, all, onChange)=>h('div',{style:'display:flex;flex-wrap:wrap;gap:2px 10px'}, all.map(t=>{ const cb=h('input',{type:'checkbox',checked:arr.includes(t)}); cb.addEventListener('change',()=>{ const i=arr.indexOf(t); if(cb.checked && i<0) arr.push(t); if(!cb.checked && i>=0) arr.splice(i,1); markChanged(); onChange&&onChange(); }); return h('label',{class:'small',style:'display:flex;gap:3px;align-items:center'},cb,t); }));
+  const cfg=h('div',{class:'box'}, h('b',{text:'계산 기준 (열별로 세는 구분)'}));
+  sm.out.forEach((c,i)=>{ const lab=h('input',{value:c.label.replace(/\n/g,' / '),style:'width:100%'}); lab.addEventListener('change',()=>{ c.label=lab.value.split(/\s*\/\s*/).join('\n'); markChanged(); });
+    cfg.append(h('div',{style:'margin-top:10px;display:grid;grid-template-columns:180px 1fr;gap:6px'}, h('div',null,h('div',{class:'small',text:`${sm.outLabel} ${i+1}`}),lab),
+      h('div',null, h('div',{class:'small',text:'소요 구분'}), chips(c.req, S.reqTypes),
+        h('div',{class:'small',style:'margin-top:4px',text:'단, 발령 구분이 다음이면 제외'}), chips(c.exclRes=c.exclRes||[], S.resTypes),
+        c.minusRes? [h('div',{class:'small',style:'margin-top:4px',text:'빼기: 발령 구분'}), chips(c.minusRes, S.resTypes)] : null))); });
+  sm.in.forEach((c,i)=>{ const lab=h('input',{value:c.label,style:'width:100%'}); lab.addEventListener('change',()=>{ c.label=lab.value; markChanged(); });
+    const nt=h('input',{value:c.note||c.exclNote||'',placeholder:'비고 조건 없음',style:'width:120px'});
+    const mode=h('select',null,h('option',{value:''},'비고 조건 없음'),h('option',{value:'note'},'비고에 포함'),h('option',{value:'excl'},'비고에 미포함')); mode.value=c.note?'note':c.exclNote?'excl':'';
+    const upd=()=>{ delete c.note; delete c.exclNote; if(mode.value==='note' && nt.value.trim()) c.note=nt.value.trim(); if(mode.value==='excl' && nt.value.trim()) c.exclNote=nt.value.trim(); markChanged(); };
+    nt.addEventListener('change',upd); mode.addEventListener('change',upd);
+    cfg.append(h('div',{style:'margin-top:10px;display:grid;grid-template-columns:180px 1fr;gap:6px'}, h('div',null,h('div',{class:'small',text:`${sm.inLabel} ${i+1}`}),lab),
+      h('div',null, h('div',{class:'small',text:'발령 구분'}), chips(c.res, S.resTypes), h('div',{class:'row-btns',style:'margin-top:4px'}, mode, nt)))); });
+  const exs=h('div',{style:'margin-top:12px'}, h('div',{class:'small',text:'통계에서 뺄 교과 (예: 영양·사서가 중등교사 통계에 들어가지 않을 때)'}), chips(sm.excludeSubjects=sm.excludeSubjects||[], S.subjects));
+  cfg.append(exs, h('div',{class:'row-btns'}, h('button',{onclick:()=>{ if(!confirm('통계 계산 기준을 기본값으로 되돌릴까요?')) return; S.summary=defaultSummary(); markChanged(); redraw(); }},'기본값으로'), h('button',{onclick:()=>redraw()},'미리보기 새로고침')));
+  p.append(cfg);
+}
+function downloadSummaryXlsx(){
+  const sm=S.summary; const rows=summaryRows();
+  const nOut=sm.out.length, nIn=sm.in.length; const cOutSum=3+nOut, cIn=cOutSum+1, cInSum=cIn+nIn, cBal=cInSum+1;
+  const fonts=['<font><sz val="10"/><name val="맑은 고딕"/><family val="3"/><charset val="129"/></font>','<font><b/><sz val="16"/><name val="맑은 고딕"/><family val="3"/><charset val="129"/></font>','<font><b/><sz val="10"/><name val="맑은 고딕"/><family val="3"/><charset val="129"/></font>','<font><b/><sz val="10"/><color rgb="FFC00000"/><name val="맑은 고딕"/><family val="3"/><charset val="129"/></font>'];
+  const fills=['<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FFDFE6F7"/><bgColor indexed="64"/></patternFill></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FFFFF7CC"/><bgColor indexed="64"/></patternFill></fill>','<fill><patternFill patternType="solid"><fgColor rgb="FFEDEFF3"/><bgColor indexed="64"/></patternFill></fill>'];
+  const borders=['<border><left/><right/><top/><bottom/><diagonal/></border>']; const bMap=new Map(); const xfs=['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>']; const xMap=new Map();
+  const side=(n,s)=> s? `<${n} style="${s}"><color auto="1"/></${n}>` : `<${n}/>`;
+  const bid=(l,r,t,b)=>{ const k=[l,r,t,b].join('|'); if(!bMap.has(k)){ bMap.set(k,borders.length); borders.push(`<border>${side('left',l)}${side('right',r)}${side('top',t)}${side('bottom',b)}<diagonal/></border>`); } return bMap.get(k); };
+  const st=({font=0,fill=0,b=['','','',''],h='center',wrap=false})=>{ const k=[font,fill,bid(...b),h,wrap].join('|'); if(!xMap.has(k)){ xMap.set(k,xfs.length); xfs.push(`<xf numFmtId="0" fontId="${font}" fillId="${fill}" borderId="${bid(...b)}" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="${h}" vertical="center"${wrap?' wrapText="1"':''}/></xf>`); } return xMap.get(k); };
+  const lastRow=4+rows.length+1; const lastCol=cBal;
+  const bd=(r,c)=>{ if(r<3) return ['','','','']; const m='medium',t='thin';
+    return [ (c===1||c===3||c===cIn||c===cBal)?m:t, (c===lastCol||c===cOutSum||c===cInSum)?m:t, (r===3||r===lastRow)?m:t, (r===4||r===lastRow||r===lastRow-1)?m:t ]; };
+  const cells=new Map(); const merges=[];
+  const put=(r,c,v,o={},f)=>cells.set(r*1000+c,{r,c,v,f,s:st({...o,b:bd(r,c)})});
+  const area=(r1,c1,r2,c2,v,o)=>{ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) put(r,c,(r===r1&&c===c1)?v:null,o); if(r1!==r2||c1!==c2) merges.push(`${colName(c1)}${r1}:${colName(c2)}${r2}`); };
+  const hd={fill:2,font:2,wrap:true};
+  area(1,1,1,lastCol-1,sm.title,{font:1});
+  area(3,1,4,1,'연번',hd); area(3,2,4,2,'학교명',hd); area(3,3,3,cOutSum,sm.outLabel,hd); area(3,cIn,3,cInSum,sm.inLabel,hd); area(3,cBal,4,cBal,sm.balanceLabel,hd);
+  sm.out.forEach((c,i)=>put(4,3+i,c.label,hd)); put(4,cOutSum,sm.totalLabel,{...hd,fill:4});
+  sm.in.forEach((c,i)=>put(4,cIn+i,c.label,hd)); put(4,cInSum,sm.totalLabel,{...hd,fill:4});
+  rows.forEach((x,i)=>{ const r=5+i;
+    put(r,1,i+1,{}); put(r,2,x.name,{h:'left'});
+    x.outV.forEach((v,k)=>put(r,3+k,v||null,{})); put(r,cOutSum,x.outSum,{font:2,fill:4},`SUM(${colName(3)}${r}:${colName(cOutSum-1)}${r})`);
+    x.inV.forEach((v,k)=>put(r,cIn+k,v||null,{})); put(r,cInSum,x.inSum,{font:2,fill:4},`SUM(${colName(cIn)}${r}:${colName(cInSum-1)}${r})`);
+    put(r,cBal,x.bal,{font:x.bal?3:0},`${colName(cInSum)}${r}-${colName(cOutSum)}${r}`);
+  });
+  area(lastRow,1,lastRow,2,sm.totalLabel,{fill:2,font:2});
+  for(let c=3;c<=lastCol;c++){ const tot=rows.reduce((a,x)=>a+(c<cOutSum?x.outV[c-3]:c===cOutSum?x.outSum:c<cInSum?x.inV[c-cIn]:c===cInSum?x.inSum:x.bal),0); put(lastRow,c,tot,{fill:2,font:2},`SUM(${colName(c)}5:${colName(c)}${lastRow-1})`); }
+  const heights={1:29,3:18,4:Math.max(30, 13*Math.max(...sm.out.concat(sm.in).map(c=>c.label.split('\n').length))+8)};
+  let sd='';
+  for(let r=1;r<=lastRow;r++){
+    const cs=[...cells.values()].filter(x=>x.r===r).sort((a,b)=>a.c-b.c); if(!cs.length && r!==2) continue;
+    sd+=`<row r="${r}" ht="${heights[r]||19}" customHeight="1">`;
+    for(const x of cs){ const ref=colName(x.c)+r;
+      if(x.f) sd+=`<c r="${ref}" s="${x.s}"><f>${xesc(x.f)}</f><v>${Number(x.v)||0}</v></c>`;
+      else if(x.v==null||x.v==='') sd+=`<c r="${ref}" s="${x.s}"/>`;
+      else if(typeof x.v==='number') sd+=`<c r="${ref}" s="${x.s}"><v>${x.v}</v></c>`;
+      else sd+=`<c r="${ref}" s="${x.s}" t="inlineStr"><is><t xml:space="preserve">${xesc(x.v)}</t></is></c>`; }
+    sd+='</row>';
+  }
+  const cols=[`<col min="1" max="1" width="6" customWidth="1"/>`,`<col min="2" max="2" width="${sm.nameMode==='short'?12.7:20}" customWidth="1"/>`,`<col min="3" max="${lastCol}" width="9.5" customWidth="1"/>`].join('');
+  const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="${REL_NS}"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${colName(lastCol)}${lastRow}"/><sheetViews><sheetView workbookViewId="0" tabSelected="1"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="16.4"/><cols>${cols}</cols><sheetData>${sd}</sheetData><mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join('')}</mergeCells><printOptions horizontalCentered="1"/><pageMargins left="0.4" right="0.4" top="0.6" bottom="0.6" header="0.3" footer="0.3"/><pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="1"/></worksheet>`;
+  const sheetName='중등교사 인사현황';
+  const files=[
+    {name:'[Content_Types].xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`},
+    {name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+    {name:'xl/workbook.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="${REL_NS}"><sheets><sheet name="${xesc(sheetName)}" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm.Print_Area" localSheetId="0">'${sheetName}'!$A$1:$${colName(lastCol)}$${lastRow}</definedName></definedNames><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`},
+    {name:'xl/_rels/workbook.xml.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`},
+    {name:'xl/worksheets/sheet1.xml',data:sheet},
+    {name:'xl/styles.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="${fonts.length}">${fonts.join('')}</fonts><fills count="${fills.length}">${fills.join('')}</fills><borders count="${borders.length}">${borders.join('')}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join('')}</cellXfs><cellStyles count="1"><cellStyle name="표준" xfId="0" builtinId="0"/></cellStyles></styleSheet>`}
+  ];
+  saveBlob(zipStore(files), `중등교사_인사현황_통계_${stamp()}.xlsx`);
+}
+
+/* ---------- 초기화 ---------- */
+function renderResetPane(p, redraw){
+  const total=S.schools.reduce((a,s)=>a+filledRows(s.id).length,0);
+  p.append(h('h4',{text:'초기화'}),
+    h('p',{class:'help',text:`현재 입력된 자료: ${total}행. 초기화는 되돌릴 수 없으니 필요하면 먼저 [저장·불러오기]에서 백업 파일을 저장하세요.`}));
+  // 1) 자료 초기화
+  const scope=h('select',null, h('option',{value:'__all'},'전체 학교'), S.schools.map(s=>h('option',{value:s.id},s.name)));
+  const what=h('select',null,
+    h('option',{value:'all'},'소요·발령 자료와 특이사항 모두'),
+    h('option',{value:'rows'},'소요·발령 자료만 (특이사항 유지)'),
+    h('option',{value:'notes'},'특이사항만'),
+    h('option',{value:'res'},'발령사항만 비우기 (소요사항 유지)'),
+    h('option',{value:'gwannae'},'소요 구분이 「관내」인 행만 삭제'),
+    h('option',{value:'cheonggan'},'소요 구분이 「청간」인 행만 삭제'));
+  p.append(h('div',{class:'box'}, h('b',{text:'자료 초기화'}),
+    h('div',{class:'row-btns'}, scope, what, h('button',{class:'danger',onclick:()=>{
+      const ids = scope.value==='__all' ? S.schools.map(s=>s.id) : [scope.value];
+      const label = scope.value==='__all' ? '전체 학교' : schoolById(scope.value).name;
+      if(!confirm(`${label}의 「${what.selectedOptions[0].text}」을(를) 초기화할까요?`)) return;
+      for(const id of ids){
+        const d=S.data[id]; if(!d) continue;
+        if(what.value==='all'){ delete S.data[id]; continue; }
+        if(what.value==='rows') d.rows=[];
+        if(what.value==='notes') d.notes='';
+        if(what.value==='res') d.rows.forEach(r=>{ r.resType=''; r.resName=''; r.resFrom=''; r.note=''; });
+        if(what.value==='gwannae') d.rows=d.rows.filter(r=>clean(r.reqType)!=='관내');
+        if(what.value==='cheonggan') d.rows=d.rows.filter(r=>clean(r.reqType)!=='청간');
+      }
+      markChanged(); redraw(); toast('초기화했습니다.');
+    }},'초기화'))));
+  // 2) 설정 초기화
+  const items=[['schools','학교 목록'],['subjects','교과 목록'],['reqTypes','소요 구분 목록'],['resTypes','발령 구분 목록'],['noteOptions','비고 항목'],['labels','메뉴명'],['stats','통계 기준'],['subjectAliases','명부 교과명 변환']];
+  const checks=items.map(([k,t])=>[k,t,h('input',{type:'checkbox'})]);
+  p.append(h('div',{class:'box'}, h('b',{text:'설정을 기본값으로'}),
+    h('div',{class:'small',text:'입력한 자료는 그대로 두고 선택한 설정만 처음 상태로 되돌립니다. 학교 목록을 되돌려도 같은 이름의 학교 자료는 유지됩니다.'}),
+    h('div',{style:'display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px'}, checks.map(([k,t,c])=>h('label',{style:'display:flex;gap:5px;align-items:center'},c,t))),
+    h('div',{class:'row-btns'}, h('button',{class:'danger',onclick:()=>{
+      const sel=checks.filter(x=>x[2].checked); if(!sel.length) return toast('되돌릴 항목을 선택하세요.');
+      if(!confirm(`${sel.map(x=>x[1]).join(', ')}을(를) 기본값으로 되돌릴까요?`)) return;
+      const d=defaultState();
+      for(const [k] of sel){
+        if(k==='schools'){
+          const old=S.schools;
+          S.schools=d.schools.map(ns=>{ const o=old.find(x=>x.name===ns.name); return o? {...ns,id:o.id} : ns; });
+          const keep=new Set(S.schools.map(x=>x.id)); for(const id of Object.keys(S.data)) if(!keep.has(id)) delete S.data[id];
+        } else S[k]=d[k];
+      }
+      markChanged(); redraw(); toast('기본값으로 되돌렸습니다.');
+    }},'선택 항목 되돌리기'))));
+  p.append(h('div',{class:'box'}, h('b',{text:'저장된 명부·발령자료'}),
+    h('div',{class:'small',text:`전임교 자동 입력에 쓰는 자료입니다. 관내 명부 ${S.rosterRecs.filter(r=>r.type==='관내').length}명 · 청간 명부 ${S.rosterRecs.filter(r=>r.type==='청간').length}명 · 발령 PDF ${S.pdfRecs.length}명`}),
+    h('div',{class:'row-btns'}, h('button',{class:'danger',onclick:()=>{ if(!confirm('저장된 명부·발령자료를 지울까요? 이미 입력된 소요·발령 내용은 그대로 남습니다.')) return; S.rosterRecs=[]; S.pdfRecs=[]; S.pdfInfo=null; pdfCache=null; markChanged(); redraw(); toast('지웠습니다.'); }},'명부·발령자료 지우기'))));
+  // 3) 전체
+  p.append(h('div',{class:'box'}, h('b',{text:'전체 초기화'}),
+    h('div',{class:'row-btns'},
+      h('button',{class:'danger',onclick:()=>{ if(!confirm('자료와 설정을 모두 처음 상태로 되돌릴까요?')) return; S=defaultState(); currentId=S.schools[0].id; markChanged(); redraw(); toast('전체를 초기화했습니다.'); }},'자료·설정 전체 초기화'),
+      h('button',{class:'danger',onclick:()=>{ if(!confirm('이 기기(브라우저)에 저장된 자료와 설정을 모두 지울까요?\n공용 PC에서 작업을 마칠 때 사용하세요. 백업 파일이 없으면 되돌릴 수 없습니다.')) return; try{ localStorage.removeItem(STORE_KEY); }catch{} clearTimeout(saveTimer); S=defaultState(); currentId=S.schools[0].id; lastSavedAt=null; redraw(); toast('이 기기에서 지웠습니다.'); }},'이 기기에서 모두 지우기')),
+    h('div',{class:'small',text:'공용 PC에서 작업을 마쳤다면 [이 기기에서 모두 지우기]를 눌러 주세요.'})));
+}
+
+/* ---------- 관내·청간 명부 → 소요사항 ---------- */
+const normName=v=>clean(v).replace(/\s+/g,'');
+function mapSubject(raw){
+  let v=clean(raw).replace(/[・·∙•ㆍ‧･]/g,'').replace(/\s+/g,'');
+  if(!v) return '';
+  const al=S.subjectAliases.find(a=>normName(a.from)===v); if(al) return clean(al.to);
+  const hit=S.subjects.find(x=>normName(x)===v); return hit||v;
+}
+function findSchool(raw){
+  const v=normName(raw); if(!v) return null;
+  return S.schools.find(s=>normName(s.name)===v) || S.schools.find(s=>normName(s.short)===v)
+      || (/교육지원청$|교육청$/.test(v) ? S.schools.find(s=>s.level==='office' && (v.endsWith(normName(s.name).replace(/^경기도/,'')) || normName(s.name).endsWith(v.replace(/^경기도/,'')))) : null);
+}
+async function parseRoster(buf){
+  const sheets=await readWorkbook(buf);
+  for(const sh of sheets){
+    if(sh.hidden) continue;
+    const byRow=new Map(); let maxRow=0;
+    for(const [ref,val] of sh.cells){ const m=/^([A-Z]+)(\d+)$/.exec(ref); if(!m) continue; const r=+m[2]; maxRow=Math.max(maxRow,r); if(!byRow.has(r)) byRow.set(r,{}); byRow.get(r)[m[1]]=val; }
+    let hr=0, col={};
+    for(let r=1;r<=Math.min(maxRow,20);r++){
+      const row=byRow.get(r)||{}; const inv={};
+      for(const [c,v] of Object.entries(row)) inv[normName(v)] = inv[normName(v)] || c;
+      const inst=inv['기관']||inv['소속교']||inv['학교명']||inv['소속기관'];
+      if(inst && inv['교과']){ hr=r; col={inst:inv['기관']||inv['소속교']||inv['학교명']||inv['소속기관'], subject:inv['교과'], name:inv['성명'], hope:inv['1희망지']||inv['희망지']}; break; }
+    }
+    if(!hr) continue;
+    const recs=[]; let hopeOffice=0, hopeSchool=0;
+    for(let r=hr+1;r<=maxRow;r++){
+      const x=byRow.get(r); if(!x) continue;
+      const inst=clean(x[col.inst]), subj=clean(x[col.subject]);
+      if(!inst && !subj) continue;
+      if(normName(inst)==='기관' || normName(subj)==='교과') continue;
+      const hope=normName(col.hope? x[col.hope] : '');
+      if(/교육지원청$|교육청$/.test(hope)) hopeOffice++; else if(hope && hope!=='희망지') hopeSchool++;
+      recs.push({inst, rawSubject:subj, name: col.name? clean(x[col.name]) : ''});
+    }
+    return {sheet:sh.name, recs, guess: hopeOffice>hopeSchool ? '청간' : '관내', hasNameCol:!!col.name};
+  }
+  throw new Error('명부 형식(「기관」「교과」 머리글)을 찾지 못했습니다.');
+}
+function rosterKey(r){ return [clean(r.subject),clean(r.reqType),clean(r.reqName)].join('|'); }
+function renderRosterPane(p, redraw){
+  p.append(h('h4',{text:'관내·청간 명부'}),
+    h('p',{class:'help',text:'관내 또는 청간 전보내신자 명부(.xlsx)를 올리면 「기관」(소속교) 열로 학교를 찾아 그 학교의 소요사항에 교과·구분·성명을 넣습니다. 구분은 관내 명부면 「관내」, 청간 명부면 「청간」입니다. 파일은 이 브라우저 안에서만 읽습니다.'}));
+  const fi=h('input',{type:'file',accept:'.xlsx'}); const out=h('div');
+  fi.addEventListener('change', async()=>{
+    const f=fi.files[0]; if(!f) return; fi.value='';
+    out.replaceChildren(h('p',{class:'small',text:'읽는 중…'}));
+    try{ showRosterPreview(out, await parseRoster(await f.arrayBuffer()), f.name, redraw); }
+    catch(e){ console.error(e); out.replaceChildren(h('p',{style:'color:var(--danger)',text:'파일을 읽지 못했습니다: '+e.message})); }
+  });
+  p.append(h('div',{class:'row-btns'}, fi), out, fromStoreBox(redraw));
+  // 교과명 변환 규칙
+  const box=h('div',{class:'box'}, h('b',{text:'명부 교과명 변환'}),
+    h('div',{class:'small',text:'명부의 교과명이 유인물 교과명과 다를 때 바꿔 넣습니다. 가운뎃점(・)과 띄어쓰기는 자동으로 지웁니다(예: 도덕・윤리 → 도덕윤리).'}));
+  const list=h('div',{class:'list-ed',style:'margin-top:8px'});
+  S.subjectAliases.forEach((a,i)=>{
+    const f1=h('input',{value:a.from}), f2=h('input',{value:a.to,list:'dl-subjects'});
+    f1.addEventListener('change',()=>{ a.from=clean(f1.value); markChanged(); }); f2.addEventListener('change',()=>{ a.to=clean(f2.value); markChanged(); });
+    list.append(h('div',{class:'it'}, f1, h('span',{text:'→'}), f2, h('button',{class:'icon danger',onclick:()=>{ S.subjectAliases.splice(i,1); markChanged(); redraw(); }},'삭제')));
+  });
+  const n1=h('input',{placeholder:'명부 교과명'}), n2=h('input',{placeholder:'유인물 교과명',list:'dl-subjects'});
+  list.append(h('div',{class:'it',style:'margin-top:6px'}, n1, h('span',{text:'→'}), n2, h('button',{class:'primary',onclick:()=>{ const a=clean(n1.value), b=clean(n2.value); if(!a||!b) return; S.subjectAliases.push({from:a,to:b}); markChanged(); redraw(); }},'추가')));
+  box.append(list, h('datalist',{id:'dl-subjects'}, S.subjects.map(x=>h('option',{value:x}))));
+  p.append(box);
+}
+function showRosterPreview(out, parsed, fileName, redraw){
+  const typeSel=h('select',null, h('option',{value:'관내'},'관내 명부 → 소요 구분 「관내」'), h('option',{value:'청간'},'청간 명부 → 소요 구분 「청간」'));
+  typeSel.value=parsed.guess;
+  const mode=h('select',null,
+    h('option',{value:'merge'},'추가 (이미 있는 같은 교과·구분·성명은 건너뜀)'),
+    h('option',{value:'replace'},'교체 (명부에 나온 학교의 해당 구분 소요 행을 지우고 새로 넣음)'));
+  const area=h('div');
+  const draw=()=>{
+    const type=typeSel.value;
+    const groups=new Map(), unmatched=new Map(), newSubjects=new Set();
+    for(const r of parsed.recs){
+      const sc=findSchool(r.inst);
+      if(!sc){ unmatched.set(r.inst,(unmatched.get(r.inst)||0)+1); continue; }
+      const subject=mapSubject(r.rawSubject);
+      if(subject && !S.subjects.includes(subject)) newSubjects.add(subject);
+      if(!groups.has(sc.id)) groups.set(sc.id,[]);
+      groups.get(sc.id).push({subject, reqType:type, reqName:r.name});
+    }
+    // 학교별로 추가될 행 계산
+    const plan=[];
+    for(const [id,list] of groups){
+      const existing=(S.data[id]?.rows||[]).filter(rowFilled);
+      let add=list;
+      if(mode.value==='merge'){
+        const cnt=new Map(); for(const r of existing){ const k=rosterKey(r); cnt.set(k,(cnt.get(k)||0)+1); }
+        add=[]; for(const r of list){ const k=rosterKey(r); const c=cnt.get(k)||0; if(c>0) cnt.set(k,c-1); else add.push(r); }
+      }
+      const removed = mode.value==='replace' ? existing.filter(r=>clean(r.reqType)===type) : [];
+      plan.push({id, list, add, removed});
+    }
+    plan.sort((a,b)=>S.schools.findIndex(s=>s.id===a.id)-S.schools.findIndex(s=>s.id===b.id));
+    const totalAdd=plan.reduce((a,x)=>a+x.add.length,0), totalDel=plan.reduce((a,x)=>a+x.removed.length,0);
+    const noName=parsed.recs.filter(r=>!r.name).length;
+    const tb=h('tbody', null, plan.map(x=>h('tr',null, h('td',{text:schoolById(x.id).name}), h('td',{text:x.list.length}), h('td',{text:x.add.length}), h('td',{text:x.removed.length||''}))));
+    area.replaceChildren(
+      h('div',{class:'box'},
+        `「${fileName}」 · 명부 ${parsed.recs.length}명 · 학교 ${plan.length}곳 → 추가 ${totalAdd}행`+(totalDel?` · 삭제 ${totalDel}행`:''),
+        noName? h('div',{style:'color:var(--warn)',text:`성명이 비어 있는 사람이 ${noName}명입니다. 성명 칸은 비운 채로 넣습니다.`}) : null,
+        unmatched.size? h('div',{style:'color:var(--danger)',text:`학교를 찾지 못한 기관(넣지 않음): ${[...unmatched].map(([k,v])=>`${k} ${v}명`).join(', ')} — 설정 → 학교 관리에서 정식명칭을 맞추면 들어갑니다.`}) : null,
+        newSubjects.size? h('div',{text:`교과 목록에 없어 새로 추가될 교과: ${[...newSubjects].join(', ')} (설정 → 교과에서 순서 조정 가능)`}) : null),
+      h('table',{class:'imp-table'}, h('thead',null,h('tr',null,['학교','명부 인원','추가될 행','삭제될 행'].map(t=>h('th',{text:t})))), tb),
+      h('div',{class:'row-btns'}, h('button',{class:'primary',onclick:()=>{
+        if(mode.value==='replace' && totalDel && !confirm(`${plan.filter(x=>x.removed.length).length}개 학교에서 소요 구분 「${type}」 행 ${totalDel}개를 지우고 명부로 다시 넣습니다. 그 행에 입력한 발령사항도 함께 지워집니다. 계속할까요?`)) return;
+        for(const s of newSubjects) if(!S.subjects.includes(s)) S.subjects.push(s);
+        S.rosterRecs=S.rosterRecs.filter(r=>r.type!==type).concat(parsed.recs.map(r=>({type, inst:clean(r.inst), subject:mapSubject(r.rawSubject), name:clean(r.name)})));
+        for(const x of plan){
+          const d=dataOf(x.id);
+          if(mode.value==='replace') d.rows=d.rows.filter(r=>!(rowFilled(r) && clean(r.reqType)===type));
+          d.rows.push(...x.add.map(r=>({...blankRow(), ...r})));
+          d.rows=sortRows(d.rows.filter(rowFilled));
+        }
+        markChanged(); saveLocal(); toast(`소요사항에 ${totalAdd}행을 넣었습니다.`);
+        area.replaceChildren(h('p',{text:`반영 완료: ${totalAdd}행 추가`+(totalDel?`, ${totalDel}행 교체`:'')+'. 설정을 닫으면 화면에 반영됩니다.'}));
+      }},'소요사항에 반영')));
+  };
+  typeSel.addEventListener('change',draw); mode.addEventListener('change',draw);
+  out.replaceChildren(h('div',{class:'form',style:'margin-top:10px'}, h('label',{text:'명부 종류'}), typeSel, h('label',{text:'반영 방식'}), mode), area);
+  draw();
+}
+
+/* ---------- 발령사항 전임교 자동 입력 ---------- */
+const NO_LOOKUP_TYPES=new Set(['신규','기간제','TO감','TO증','미발령','학교정원']);
+function officeNames(){ return S.schools.filter(s=>s.level==='office').map(s=>normName(s.name)).concat([normName(S.labels.org)]); }
+function isOurPlace(place){
+  const v=normName(place); if(!v) return false;
+  if(officeNames().includes(v)) return true;
+  return S.schools.some(s=>normName(s.name)===v);
+}
+// 결과: {status:'ok'|'multi'|'none'|'skip', place, src, places}
+function lookupFrom(row){
+  const name=normName(row.resName), type=clean(row.resType), subj=clean(row.subject);
+  if(!name || !type || NO_LOOKUP_TYPES.has(type)) return {status:'skip'};
+  const cands=[];
+  if(type==='관내'){
+    for(const r of S.rosterRecs) if(r.type==='관내' && normName(r.name)===name) cands.push({place:r.inst, subject:r.subject, src:'관내 명부 소속교'});
+    for(const sc of S.schools) for(const x of (S.data[sc.id]?.rows||[])) if(clean(x.reqType)==='관내' && normName(x.reqName)===name) cands.push({place:sc.name, subject:clean(x.subject), src:'소요사항(관내)'});
+  } else {
+    for(const r of S.pdfRecs) if(normName(r.name)===name && isOurPlace(r.newPlace)) cands.push({place:r.oldPlace, subject:mapSubject(r.subject), src:`발령 PDF 전임지(${r.section})`});
+  }
+  const pick=(use, note)=>{
+    const places=[...new Set(use.map(c=>normName(c.place)))];
+    if(places.length===1){ const c=use.find(x=>normName(x.place)===places[0]); return {status:'ok', place:stripProvince(c.place), src:c.src+note}; }
+    if(places.length>1) return {status:'multi', places:[...new Set(use.map(c=>stripProvince(c.place)))]};
+    return null;
+  };
+  // 1순위: 성명 + 소요 교과 일치, 2순위: 성명만 일치하고 후보가 한 곳일 때
+  return (subj && pick(cands.filter(c=>c.subject===subj),'')) || pick(cands,' · 교과 다름, 성명으로 찾음') || {status:'none'};
+}
+function autoFillFrom(row){
+  const res=lookupFrom(row);
+  if(res.status!=='ok') return res;
+  if(clean(row.resFrom) && !row.resFromAuto && normName(row.resFrom)!==normName(res.place)) return {...res, status:'kept'}; // 직접 입력한 값은 유지
+  const changed = clean(row.resFrom)!==res.place;
+  row.resFrom=res.place; row.resFromAuto=res.src;
+  return {...res, changed};
+}
+function fillFromForSchools(ids){
+  const out={filled:0, same:0, multi:0, none:0, kept:0};
+  for(const id of ids) for(const r of (S.data[id]?.rows||[])){
+    if(!rowFilled(r)) continue;
+    const res=autoFillFrom(r);
+    if(res.status==='ok'){ res.changed? out.filled++ : out.same++; }
+    else if(res.status==='multi') out.multi++; else if(res.status==='none') out.none++; else if(res.status==='kept') out.kept++;
+  }
+  if(out.filled) markChanged();
+  return out;
+}
+function fillMsg(r){ return `전임교 자동 입력 ${r.filled}행`+(r.same?` · 이미 맞음 ${r.same}`:'')+(r.multi?` · 후보 여러 곳 ${r.multi}`:'')+(r.none?` · 찾지 못함 ${r.none}`:'')+(r.kept?` · 직접 입력 유지 ${r.kept}`:''); }
+function fromStoreBox(redraw){
+  const g=S.rosterRecs.filter(r=>r.type==='관내').length, c=S.rosterRecs.filter(r=>r.type==='청간').length;
+  return h('div',{class:'box'}, h('b',{text:'발령사항 전임교 자동 입력'}),
+    h('div',{class:'small',text:'발령사항에 성명을 입력하면 소요사항의 교과와 발령사항의 구분을 보고 전임교를 자동으로 넣습니다. 구분이 「관내」면 관내 명부의 소속교(또는 다른 학교 소요사항의 관내 행), 그 밖의 구분(청간·타시도전입·복직 등)은 발령 PDF에서 신임지가 우리 지역인 사람의 전임지를 씁니다.'}),
+    h('div',{class:'small',style:'margin-top:4px',text:`저장된 자료: 관내 명부 ${g}명 · 청간 명부 ${c}명 · 발령 PDF ${S.pdfRecs.length}명`+(S.pdfInfo?` (${S.pdfInfo.fileName})`:'')}),
+    h('div',{class:'row-btns'}, h('button',{class:'primary',onclick:()=>{ toast(fillMsg(fillFromForSchools(S.schools.map(s=>s.id))), 5000); redraw(); }},'모든 학교 전임교 자동 입력')));
+}
+
+/* ---------- 청간 발령 PDF → 소요사항 발령교 ---------- */
+const PDF_SECTION_DEFAULT={'일반전보':['청간',true],'수석교사전보':['청간',false],'타시도전출':['타시도전출',true],'진로전담교사신규':['진로전담 선발',false]};
+let pdfCache=null; // {fileName, records} — 메모리에만 보관
+function renderPdfPane(p, redraw){
+  p.append(h('h4',{text:'청간 발령(PDF)'}),
+    h('p',{class:'help',text:'도교육청 인사발령 PDF를 올리면 「전임지」가 우리 학교이고 「교과」가 같은 발령자를 찾아, 그 학교 소요사항(구분 「청간」)의 발령교 칸에 「신임지」를 넣습니다. 관내·청간 명부로 소요사항을 먼저 넣은 뒤 사용하세요. 파일은 이 브라우저 안에서만 읽습니다.'}));
+  const fi=h('input',{type:'file',accept:'.pdf,application/pdf'}); const out=h('div');
+  fi.addEventListener('change', async()=>{
+    const f=fi.files[0]; if(!f) return; fi.value='';
+    const msg=h('p',{class:'small',text:'PDF를 읽는 중…'}); out.replaceChildren(msg);
+    try{
+      const r=await pdfReadAppointments(await f.arrayBuffer(), (i,n)=>{ msg.textContent=`PDF를 읽는 중… ${i}/${n}쪽`; });
+      if(!r.records.length) throw new Error('발령 표(교과·신임지·성명·전임지)를 찾지 못했습니다.');
+      pdfCache={fileName:f.name, records:r.records, pages:r.pages};
+      // 전임교 자동 입력용: 우리 지역으로 오거나 우리 학교에서 나가는 발령자만 기기에 저장
+      S.pdfRecs=r.records.filter(x=>isOurPlace(x.newPlace)||isOurPlace(x.oldPlace)).map(x=>({section:x.section,subject:x.subject,name:x.name,newPlace:x.newPlace,oldPlace:x.oldPlace}));
+      S.pdfInfo={fileName:f.name, savedAt:new Date().toISOString(), total:r.records.length}; markChanged(); saveLocal();
+      showPdfPlan(out, redraw);
+    }catch(e){ console.error(e); out.replaceChildren(h('p',{style:'color:var(--danger)',text:'PDF를 읽지 못했습니다: '+e.message})); }
+  });
+  p.append(h('div',{class:'row-btns'}, fi), out);
+  if(pdfCache) showPdfPlan(out, redraw);
+  p.append(fromStoreBox(redraw));
+}
+function stripProvince(v){ return clean(v).replace(/^경기도(?=.+교육지원청$)/,''); }
+
+function buildPdfPlan(opts){
+  const recs=pdfCache.records.filter(r=>opts.sections[r.section]?.on);
+  const bySchool=new Map(); const nameIdx=new Map(S.schools.map(s=>[normName(s.name),s]));
+  for(const r of recs){ const sc=nameIdx.get(normName(r.oldPlace)); if(!sc) continue; if(!bySchool.has(sc.id)) bySchool.set(sc.id,[]); bySchool.get(sc.id).push({...r, subjectM:mapSubject(r.subject), type:opts.sections[r.section].type}); }
+  const plan=[];
+  for(const sc of S.schools){
+    const list=bySchool.get(sc.id)||[];
+    const rows=(S.data[sc.id]?.rows||[]).filter(rowFilled);
+    const types=new Set(list.map(x=>x.type)); for(const k in opts.sections) if(opts.sections[k].on) types.add(opts.sections[k].type);
+    const cand=rows.filter(r=>types.has(clean(r.reqType)));
+    if(!list.length && !cand.length) continue;
+    const used=new Set(); const matches=[]; const extra=[];
+    // 1) 성명이 같은 행
+    const pend=[];
+    for(const rec of list){
+      const row=rec.name && cand.find(r=>!used.has(r) && clean(r.reqType)===rec.type && clean(r.subject)===rec.subjectM && normName(r.reqName)===rec.name);
+      if(row){ used.add(row); matches.push({row,rec,by:'name'}); } else pend.push(rec);
+    }
+    // 2) 성명이 빈 행에 교과 순서대로
+    for(const rec of pend){
+      const row=cand.find(r=>!used.has(r) && clean(r.reqType)===rec.type && clean(r.subject)===rec.subjectM && !clean(r.reqName));
+      if(row){ used.add(row); matches.push({row,rec,by:'subject'}); } else extra.push(rec);
+    }
+    const left=cand.filter(r=>!used.has(r));
+    const changes=matches.filter(m=>{ const nv=opts.strip?stripProvince(m.rec.newPlace):m.rec.newPlace; return clean(m.row.reqTo)!==nv && (opts.overwrite || !clean(m.row.reqTo)); }).length;
+    plan.push({sc, list, matches, extra, left, changes});
+  }
+  return plan;
+}
+function showPdfPlan(out, redraw){
+  const secs={}; for(const r of pdfCache.records) secs[r.section]=(secs[r.section]||0)+1;
+  const opts={sections:{}, strip:true, fillName:true, overwrite:true, addExtra:false};
+  const secBox=h('div',{style:'display:grid;grid-template-columns:auto auto 1fr;gap:6px 12px;align-items:center;margin-top:6px'});
+  for(const [name,n] of Object.entries(secs)){
+    const [t,on]=PDF_SECTION_DEFAULT[name]||['청간',false];
+    opts.sections[name]={on,type:t};
+    const cb=h('input',{type:'checkbox',checked:on}); cb.addEventListener('change',()=>{ opts.sections[name].on=cb.checked; draw(); });
+    const sel=makeSelect(S.reqTypes, t, v=>{ opts.sections[name].type=v; draw(); }); sel.style.maxWidth='220px';
+    secBox.append(h('label',{style:'display:flex;gap:6px;align-items:center'},cb, `【${name}】 ${n}명`), h('span',{class:'small',text:'→ 소요 구분'}), sel);
+  }
+  const opt=(key,label)=>{ const cb=h('input',{type:'checkbox',checked:opts[key]}); cb.addEventListener('change',()=>{ opts[key]=cb.checked; draw(); }); return h('label',{style:'display:flex;gap:6px;align-items:center'},cb,label); };
+  const area=h('div');
+  const draw=()=>{
+    const plan=buildPdfPlan(opts);
+    const sum=k=>plan.reduce((a,x)=>a+x[k].length,0);
+    const totalMatch=sum('matches'), totalChange=plan.reduce((a,x)=>a+x.changes,0);
+    const byName=plan.reduce((a,x)=>a+x.matches.filter(m=>m.by==='name').length,0);
+    const tb=h('tbody', null, plan.map(x=>h('tr',null, h('td',{text:x.sc.name}), h('td',{text:x.list.length}), h('td',{text:x.matches.length}), h('td',{text:x.changes||''}),
+      h('td',{text:x.extra.length? x.extra.map(r=>`${r.subjectM}(${r.type})`).join(', '):'' ,style:'color:var(--warn)'}),
+      h('td',{text:x.left.length? x.left.map(r=>`${r.subject||'-'}${r.reqName?' '+r.reqName:''}`).join(', '):'',style:'color:var(--muted)'}))));
+    area.replaceChildren(
+      h('div',{class:'box'}, `PDF 발령자 중 전임지가 우리 학교인 사람 ${sum('list')}명 · 소요사항과 짝지음 ${totalMatch}명(성명 일치 ${byName}, 교과 순서 ${totalMatch-byName}) · 발령교가 새로 입력·변경될 행 ${totalChange}개`,
+        h('div',{class:'small',text:'「소요에 없음」은 PDF에는 있지만 소요사항에 같은 교과·구분 행이 없는 경우, 「PDF에 없음」은 소요사항에는 있지만 PDF에서 찾지 못한 경우입니다(미발령 등).'})),
+      h('div',{style:'max-height:360px;overflow:auto'}, h('table',{class:'imp-table'}, h('thead',null,h('tr',null,['학교','PDF 발령자','짝지음','변경','소요에 없음','PDF에 없음'].map(t=>h('th',{text:t})))), tb)),
+      h('div',{class:'row-btns'}, h('button',{class:'primary',disabled:!totalMatch && !(opts.addExtra && sum('extra')),onclick:()=>{
+        let changed=0, named=0, added=0;
+        for(const x of plan){
+          for(const m of x.matches){
+            const nv=opts.strip?stripProvince(m.rec.newPlace):m.rec.newPlace;
+            if(clean(m.row.reqTo)!==nv && (opts.overwrite || !clean(m.row.reqTo))){ m.row.reqTo=nv; changed++; }
+            if(opts.fillName && !clean(m.row.reqName) && m.rec.name){ m.row.reqName=m.rec.name; named++; }
+          }
+          if(opts.addExtra) for(const r of x.extra){ dataOf(x.sc.id).rows.push({...blankRow(), subject:r.subjectM, reqType:r.type, reqName:r.name, reqTo:opts.strip?stripProvince(r.newPlace):r.newPlace}); added++; }
+          if(S.data[x.sc.id]) S.data[x.sc.id].rows=sortRows(S.data[x.sc.id].rows.filter(rowFilled));
+        }
+        markChanged(); saveLocal();
+        toast(`발령교 ${changed}행 입력`+(named?`, 성명 ${named}명 입력`:'')+(added?`, 새 행 ${added}개 추가`:''));
+        draw();
+      }},'소요사항 발령교에 반영')));
+  };
+  out.replaceChildren(
+    h('div',{class:'box'}, `「${pdfCache.fileName}」 ${pdfCache.pages}쪽 · 발령 ${pdfCache.records.length}명을 읽었습니다.`,
+      h('div',{style:'margin-top:8px;font-weight:700',text:'반영할 발령 구분'}), secBox,
+      h('div',{style:'margin-top:10px;display:flex;flex-direction:column;gap:4px'},
+        opt('strip','신임지 앞의 「경기도」 생략 (경기도수원교육지원청 → 수원교육지원청)'),
+        opt('fillName','소요사항 성명이 비어 있으면 PDF의 성명도 함께 입력'),
+        opt('overwrite','이미 입력된 발령교도 PDF 내용으로 바꿈'),
+        opt('addExtra','소요사항에 없는 발령자는 새 소요 행으로 추가'))),
+    area);
+  draw();
+}
+
+/* ---------- PDF 텍스트 추출 (외부 라이브러리 없이) ---------- */
+// 지원 범위: 압축(Flate) 스트림, 객체 스트림(ObjStm), Type0/Identity-H 및 단순 글꼴, ToUnicode CMap
+async function pdfInflate(u8){
+  const ds=new DecompressionStream('deflate');
+  const w=ds.writable.getWriter(); w.write(u8).catch(()=>{}); w.close().catch(()=>{});
+  const r=ds.readable.getReader(); const chunks=[]; let len=0;
+  try{ for(;;){ const {done,value}=await r.read(); if(done) break; chunks.push(value); len+=value.length; } }
+  catch(e){ if(!len) throw e; } // 끝부분 잉여 바이트 오류는 무시
+  const out=new Uint8Array(len); let o=0; for(const c of chunks){ out.set(c,o); o+=c.length; } return out;
+}
+const PDF_WS=new Set([0,9,10,12,13,32]);
+const PDF_DELIM=new Set([40,41,60,62,91,93,123,125,47,37]);
+class PdfLexer{
+  constructor(u8,pos=0){ this.b=u8; this.p=pos; }
+  skipWs(){ const b=this.b; for(;;){ while(this.p<b.length && PDF_WS.has(b[this.p])) this.p++; if(b[this.p]===37){ while(this.p<b.length && b[this.p]!==10 && b[this.p]!==13) this.p++; } else break; } }
+  next(){
+    this.skipWs(); const b=this.b; if(this.p>=b.length) return null;
+    const c=b[this.p];
+    if(c===47){ let s=++this.p; while(this.p<b.length && !PDF_WS.has(b[this.p]) && !PDF_DELIM.has(b[this.p])) this.p++;
+      let name=''; for(let i=s;i<this.p;i++){ if(b[i]===35 && i+2<this.p){ name+=String.fromCharCode(parseInt(String.fromCharCode(b[i+1],b[i+2]),16)); i+=2; } else name+=String.fromCharCode(b[i]); }
+      return {t:'name',v:name}; }
+    if(c===40){ this.p++; let depth=1; const out=[];
+      while(this.p<b.length){ const ch=b[this.p++];
+        if(ch===92){ const n=b[this.p++];
+          if(n===110) out.push(10); else if(n===114) out.push(13); else if(n===116) out.push(9); else if(n===98) out.push(8); else if(n===102) out.push(12);
+          else if(n>=48&&n<=55){ let v=n-48; for(let k=0;k<2 && b[this.p]>=48 && b[this.p]<=55;k++) v=v*8+(b[this.p++]-48); out.push(v&255); }
+          else if(n===13){ if(b[this.p]===10) this.p++; } else if(n===10){} else out.push(n);
+        } else if(ch===40){ depth++; out.push(ch); } else if(ch===41){ if(--depth===0) break; out.push(ch); } else out.push(ch);
+      }
+      return {t:'str',v:Uint8Array.from(out)}; }
+    if(c===60){ if(b[this.p+1]===60){ this.p+=2; return {t:'<<'}; }
+      this.p++; let hex=''; while(this.p<b.length && b[this.p]!==62){ const ch=b[this.p++]; if(!PDF_WS.has(ch)) hex+=String.fromCharCode(ch); } this.p++;
+      if(hex.length%2) hex+='0'; const out=new Uint8Array(hex.length/2); for(let i=0;i<out.length;i++) out[i]=parseInt(hex.substr(i*2,2),16);
+      return {t:'str',v:out}; }
+    if(c===62 && b[this.p+1]===62){ this.p+=2; return {t:'>>'}; }
+    if(c===91){ this.p++; return {t:'['}; } if(c===93){ this.p++; return {t:']'}; }
+    if(c===123||c===125){ this.p++; return {t:'op',v:String.fromCharCode(c)}; }
+    let s=this.p; while(this.p<b.length && !PDF_WS.has(b[this.p]) && !PDF_DELIM.has(b[this.p])) this.p++;
+    if(s===this.p){ this.p++; return {t:'op',v:String.fromCharCode(c)}; }
+    let w=''; for(let i=s;i<this.p;i++) w+=String.fromCharCode(b[i]);
+    if(/^[+-]?(\d+\.?\d*|\.\d+)$/.test(w)) return {t:'num',v:parseFloat(w)};
+    return {t:'op',v:w};
+  }
+}
+function pdfParseValue(lx, tok){
+  tok = tok || lx.next(); if(!tok) return null;
+  if(tok.t==='num'){
+    const save=lx.p; const t2=lx.next();
+    if(t2 && t2.t==='num' && Number.isInteger(tok.v) && Number.isInteger(t2.v)){ const t3=lx.next(); if(t3 && t3.t==='op' && t3.v==='R') return {ref:tok.v}; }
+    lx.p=save; return tok.v;
+  }
+  if(tok.t==='name') return {name:tok.v};
+  if(tok.t==='str') return {str:tok.v};
+  if(tok.t==='['){ const arr=[]; for(;;){ const t=lx.next(); if(!t || t.t===']') break; arr.push(pdfParseValue(lx,t)); } return arr; }
+  if(tok.t==='<<'){ const d={}; for(;;){ const t=lx.next(); if(!t || t.t==='>>') break; if(t.t==='name') d[t.v]=pdfParseValue(lx); } return d; }
+  if(tok.t==='op'){ if(tok.v==='true') return true; if(tok.v==='false') return false; if(tok.v==='null') return null; return {op:tok.v}; }
+  return null;
+}
+async function pdfOpen(buf){
+  const u8=new Uint8Array(buf);
+  const latin=new TextDecoder('latin1').decode(u8);
+  if(!latin.startsWith('%PDF')) throw new Error('PDF 파일이 아닙니다.');
+  if(/\/Encrypt\s/.test(latin)) throw new Error('암호가 걸린 PDF는 읽을 수 없습니다.');
+  const raw=new Map(); // num -> {pos} 또는 {stm, idx}
+  const cache=new Map();
+  const doc={u8,latin};
+  const re=/(\d+)\s+(\d+)\s+obj\b/g; let m;
+  while((m=re.exec(latin))){
+    const pos=m.index+m[0].length; raw.set(+m[1],{pos});
+    try{ const r=parseAt(pos); if(r.streamStart!=null){ const L=r.val&&r.val.Length; let end = typeof L==='number' ? r.streamStart+L : latin.indexOf('endstream', r.streamStart); if(end>re.lastIndex) re.lastIndex=end; } }catch(e){}
+  }
+  function parseAt(pos){
+    const lx=new PdfLexer(u8,pos); const val=pdfParseValue(lx);
+    const save=lx.p; const t=lx.next();
+    if(t && t.t==='op' && t.v==='stream'){
+      let s=lx.p; if(u8[s]===13) s++; if(u8[s]===10) s++;
+      return {val, streamStart:s};
+    }
+    lx.p=save; return {val};
+  }
+  async function get(num){
+    if(cache.has(num)) return cache.get(num);
+    const r=raw.get(num); if(!r) return null;
+    let out;
+    if(r.pos!=null){
+      const {val,streamStart}=parseAt(r.pos);
+      if(streamStart!=null){ out={dict:val, streamStart}; } else out=val;
+    } else out=r.val;
+    cache.set(num,out); return out;
+  }
+  async function resolve(v){ let g=0; while(v && v.ref!=null && g++<20) v=await get(v.ref); return v; }
+  async function streamData(obj){
+    const d=obj.dict; let len=await resolve(d.Length);
+    let end;
+    if(typeof len==='number' && obj.streamStart+len<=u8.length) end=obj.streamStart+len;
+    else { end=latin.indexOf('endstream',obj.streamStart); if(end<0) end=u8.length; }
+    let data=u8.subarray(obj.streamStart,end);
+    let filters=await resolve(d.Filter); if(filters && !Array.isArray(filters)) filters=[filters];
+    for(const f of (filters||[])){ const n=(await resolve(f))?.name;
+      if(n==='FlateDecode') data=await pdfInflate(data);
+      else throw new Error('지원하지 않는 PDF 압축 형식: '+n); }
+    return data;
+  }
+  // 객체 스트림 펼치기
+  for(const [num,r] of [...raw]){
+    const o=await get(num);
+    if(o && o.dict && o.dict.Type?.name==='ObjStm'){
+      const data=await streamData(o); const n=await resolve(o.dict.N), first=await resolve(o.dict.First);
+      const lx=new PdfLexer(data,0); const pairs=[];
+      for(let i=0;i<n;i++){ const a=lx.next(), b=lx.next(); pairs.push([a.v,b.v]); }
+      for(const [on,off] of pairs){
+        if(raw.has(on) && raw.get(on).pos!=null && !raw.get(on).fromStm) continue; // 직접 정의가 우선
+        const vlx=new PdfLexer(data, first+off); raw.set(on,{val:pdfParseValue(vlx), fromStm:true}); cache.delete(on);
+      }
+    }
+  }
+  doc.get=get; doc.resolve=resolve; doc.streamData=streamData;
+  // 루트 → 페이지 목록
+  let root=null;
+  const tr=[...latin.matchAll(/\/Root\s+(\d+)\s+\d+\s+R/g)]; if(tr.length) root=await get(+tr[tr.length-1][1]);
+  if(!root){ for(const [num] of raw){ const o=await get(num); if(o && o.Type?.name==='Catalog'){ root=o; break; } } }
+  if(!root) throw new Error('PDF 구조를 읽지 못했습니다.');
+  const pages=[];
+  async function walk(node, inherited){
+    node=await resolve(node); if(!node) return;
+    const res=node.Resources? node.Resources : inherited;
+    if(node.Type?.name==='Pages' || node.Kids){ for(const k of (await resolve(node.Kids))||[]) await walk(k,res); }
+    else pages.push({node,res});
+  }
+  await walk(root.Pages,null);
+  doc.pages=pages;
+  return doc;
+}
+function pdfParseCMap(text){
+  const map=new Map(); const hexv=h=>parseInt(h,16);
+  const u16=h=>{ let s=''; for(let i=0;i+4<=h.length;i+=4) s+=String.fromCharCode(parseInt(h.substr(i,4),16)); if(h.length%4===2) s+=String.fromCharCode(parseInt(h.slice(-2),16)); return s; };
+  for(const blk of text.matchAll(/beginbfchar([\s\S]*?)endbfchar/g)){
+    for(const m of blk[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]*)>/g)) map.set(hexv(m[1]), u16(m[2]));
+  }
+  for(const blk of text.matchAll(/beginbfrange([\s\S]*?)endbfrange/g)){
+    for(const m of blk[1].matchAll(/<([0-9a-fA-F]+)>\s*<([0-9a-fA-F]+)>\s*(<([0-9a-fA-F]*)>|\[([^\]]*)\])/g)){
+      const lo=hexv(m[1]), hi=hexv(m[2]);
+      if(m[4]!=null){ const base=m[4]; const last=parseInt(base.slice(-4),16); const pre=base.slice(0,-4);
+        for(let c=lo;c<=hi && c-lo<65536;c++) map.set(c, u16(pre+(last+c-lo).toString(16).padStart(4,'0'))); }
+      else { const items=[...m[5].matchAll(/<([0-9a-fA-F]*)>/g)].map(x=>u16(x[1])); for(let c=lo;c<=hi;c++) map.set(c, items[c-lo]||''); }
+    }
+  }
+  let bytes=2; const cs=text.match(/begincodespacerange\s*<([0-9a-fA-F]+)>/); if(cs) bytes=cs[1].length/2;
+  return {map, bytes};
+}
+async function pdfLoadFont(doc, fref){
+  const f=await doc.resolve(fref); if(!f) return null;
+  const font={type0:f.Subtype?.name==='Type0', bytes:1, toUni:null, widths:new Map(), dw:1000};
+  if(f.ToUnicode){ const s=await doc.resolve(f.ToUnicode); if(s && s.dict){ const cm=pdfParseCMap(new TextDecoder('latin1').decode(await doc.streamData(s))); font.toUni=cm.map; if(font.type0) font.bytes=2; } }
+  if(font.type0){
+    font.bytes=2;
+    const df=await doc.resolve(((await doc.resolve(f.DescendantFonts))||[])[0]);
+    if(df){ if(typeof df.DW==='number') font.dw=df.DW; const W=(await doc.resolve(df.W))||[];
+      for(let i=0;i<W.length;){ const a=await doc.resolve(W[i]); const b=await doc.resolve(W[i+1]);
+        if(Array.isArray(b)){ for(let k=0;k<b.length;k++) font.widths.set(a+k, await doc.resolve(b[k])); i+=2; }
+        else { const w=await doc.resolve(W[i+2]); for(let c=a;c<=b;c++) font.widths.set(c,w); i+=3; } }
+    }
+  } else {
+    font.dw=500; const fc=(await doc.resolve(f.FirstChar))||0; const ws=(await doc.resolve(f.Widths))||[];
+    for(let i=0;i<ws.length;i++) font.widths.set(fc+i, await doc.resolve(ws[i]));
+  }
+  return font;
+}
+const pdfMul=(m,n)=>[m[0]*n[0]+m[1]*n[2], m[0]*n[1]+m[1]*n[3], m[2]*n[0]+m[3]*n[2], m[2]*n[1]+m[3]*n[3], m[4]*n[0]+m[5]*n[2]+n[4], m[4]*n[1]+m[5]*n[3]+n[5]];
+async function pdfPageGlyphs(doc, page){
+  const res=await doc.resolve(page.res)||{}; const fontsDict=await doc.resolve(res.Font)||{};
+  const fonts={}; for(const k of Object.keys(fontsDict)) fonts[k]=await pdfLoadFont(doc, fontsDict[k]);
+  let contents=await doc.resolve(page.node.Contents); if(!contents) return [];
+  if(!Array.isArray(contents)) contents=[page.node.Contents];
+  const parts=[]; for(const c of contents){ const s=await doc.resolve(c); if(s && s.dict) parts.push(await doc.streamData(s)); }
+  const total=parts.reduce((a,p)=>a+p.length+1,0); const data=new Uint8Array(total); let o=0; for(const p of parts){ data.set(p,o); o+=p.length; data[o++]=10; }
+  const lx=new PdfLexer(data,0); const glyphs=[];
+  let gs={ctm:[1,0,0,1,0,0]}; const stack=[];
+  let ts={Tc:0,Tw:0,Tz:1,TL:0,font:null,fs:0,rise:0}; let tm=[1,0,0,1,0,0], tlm=[1,0,0,1,0,0];
+  let ops=[];
+  const show=(bytes)=>{
+    const f=ts.font; if(!f) return;
+    for(let i=0;i<bytes.length;i+=f.bytes){
+      const code = f.bytes===2 ? (bytes[i]<<8)|(bytes[i+1]||0) : bytes[i];
+      const w=(f.widths.has(code)?f.widths.get(code):f.dw)/1000;
+      const trm=pdfMul(pdfMul([ts.fs*ts.Tz,0,0,ts.fs,0,ts.rise], tm), gs.ctm);
+      let ch = f.toUni && f.toUni.has(code) ? f.toUni.get(code) : (f.bytes===1 ? String.fromCharCode(code) : '');
+      const adv=(w*ts.fs + ts.Tc + (f.bytes===1 && code===32 ? ts.Tw : 0))*ts.Tz;
+      const x0=trm[4], y=trm[5], h=Math.hypot(trm[2],trm[3]);
+      const x1=x0 + w*Math.hypot(trm[0],trm[1]);
+      if(ch) glyphs.push({ch, x0, x1, y, h});
+      tm=pdfMul([1,0,0,1,adv,0], tm);
+    }
+  };
+  for(;;){
+    const t=lx.next(); if(!t) break;
+    if(t.t!=='op'){ ops.push(pdfParseValue(lx,t)); continue; }
+    const op=t.v; const a=ops; ops=[];
+    switch(op){
+      case 'q': stack.push({ctm:gs.ctm.slice()}); break;
+      case 'Q': if(stack.length) gs=stack.pop(); break;
+      case 'cm': if(a.length>=6) gs.ctm=pdfMul(a.slice(-6), gs.ctm); break;
+      case 'BT': tm=[1,0,0,1,0,0]; tlm=[1,0,0,1,0,0]; break;
+      case 'Tf': ts.font=fonts[a[0]?.name]||null; ts.fs=a[1]||0; break;
+      case 'Tc': ts.Tc=a[0]||0; break; case 'Tw': ts.Tw=a[0]||0; break; case 'Tz': ts.Tz=(a[0]??100)/100; break;
+      case 'TL': ts.TL=a[0]||0; break; case 'Ts': ts.rise=a[0]||0; break;
+      case 'Tm': tm=a.slice(-6); tlm=tm.slice(); break;
+      case 'Td': tlm=pdfMul([1,0,0,1,a[0]||0,a[1]||0], tlm); tm=tlm.slice(); break;
+      case 'TD': ts.TL=-(a[1]||0); tlm=pdfMul([1,0,0,1,a[0]||0,a[1]||0], tlm); tm=tlm.slice(); break;
+      case 'T*': tlm=pdfMul([1,0,0,1,0,-ts.TL], tlm); tm=tlm.slice(); break;
+      case 'Tj': if(a[0]?.str) show(a[0].str); break;
+      case "'": tlm=pdfMul([1,0,0,1,0,-ts.TL], tlm); tm=tlm.slice(); if(a[0]?.str) show(a[0].str); break;
+      case '"': ts.Tw=a[0]||0; ts.Tc=a[1]||0; tlm=pdfMul([1,0,0,1,0,-ts.TL], tlm); tm=tlm.slice(); if(a[2]?.str) show(a[2].str); break;
+      case 'TJ': for(const it of (Array.isArray(a[0])?a[0]:[])){ if(it?.str) show(it.str); else if(typeof it==='number') tm=pdfMul([1,0,0,1,-it/1000*ts.fs*ts.Tz,0], tm); } break;
+      case 'BI': { // 인라인 이미지 건너뛰기
+        const i=new TextDecoder('latin1').decode(data.subarray(lx.p)).search(/\sEI\s/); lx.p = i<0? data.length : lx.p+i+4; break; }
+      default: break;
+    }
+  }
+  return glyphs;
+}
+// 글자들을 줄 단위로 묶기
+function pdfLines(glyphs){
+  const gl=glyphs.filter(g=>g.ch.trim()!=='' || true).sort((a,b)=>b.y-a.y || a.x0-b.x0);
+  const lines=[];
+  for(const g of gl){
+    const L=lines.length? lines[lines.length-1] : null;
+    if(L && Math.abs(L.y-g.y) <= Math.max(1.5, 0.35*Math.max(L.h,g.h))) L.g.push(g);
+    else lines.push({y:g.y, h:g.h, g:[g]});
+  }
+  for(const L of lines) L.g.sort((a,b)=>a.x0-b.x0);
+  return lines;
+}
+
+// 발령 PDF 표 해석: 【구분】 제목 아래 「교과·신임지·성명·전임지」 표
+function pdfAppointmentRecords(pagesLines){
+  const recs=[]; let section=''; let cols=null;
+  const ns=s=>s.replace(/\s+/g,'');
+  for(let pi=0;pi<pagesLines.length;pi++){
+    const lines=pagesLines[pi];
+    for(let li=0;li<lines.length;li++){
+      const L=lines[li]; const txt=L.g.map(g=>g.ch).join(''); const t=ns(txt);
+      const sec=t.match(/【([^】]+)】/); if(sec){ section=sec[1]; cols=null; continue; }
+      if(t.includes('교과') && t.includes('신임지') && t.includes('전임지')){
+        // 머리글 글자 위치로 열 중심 계산
+        const chars=L.g.filter(g=>g.ch.trim()); const str=chars.map(g=>g.ch).join('');
+        const span=(label,from=0)=>{ const i=str.indexOf(label,from); if(i<0) return null; const a=chars[i], b=chars[i+label.length-1]; return {i, c:(a.x0+b.x1)/2}; };
+        const sj=span('교과'), ni=span('신임지'), nm=span('성명'), oi=span('전임지');
+        cols=[['subject',sj.c],['newPlace',ni.c],['name',nm?nm.c:null],['oldPlace',oi.c]].filter(x=>x[1]!=null);
+        // 직급 열(위아래 줄)도 열로 등록
+        for(const k of [li-1,li-2,li+1,li+2]){ const LL=lines[k]; if(!LL) continue; const cc=LL.g.filter(g=>g.ch.trim()); const ss=cc.map(g=>g.ch).join('');
+          let i=-1; while((i=ss.indexOf('직급',i+1))>=0) cols.push(['rank',(cc[i].x0+cc[i+1].x1)/2]); }
+        continue;
+      }
+      if(!cols || !section) continue;
+      // 단어 묶기
+      const words=[]; let cur=null;
+      for(const g of L.g){
+        if(!g.ch.trim()){ cur=null; continue; }
+        if(cur && g.x0-cur.x1 < Math.max(1, g.h*0.45)){ cur.text+=g.ch; cur.x1=g.x1; }
+        else { cur={text:g.ch,x0:g.x0,x1:g.x1}; words.push(cur); }
+      }
+      if(!words.length) continue;
+      const rec={}; for(const w of words){ const c=(w.x0+w.x1)/2; let best=null, bd=1e9; for(const [k,x] of cols){ const d=Math.abs(c-x); if(d<bd){ bd=d; best=k; } } rec[best]=(rec[best]?rec[best]+' ':'')+w.text; }
+      if(/^-\s*\d+\s*-$/.test(ns(txt)) || /^\d+$/.test(ns(txt))) continue; // 쪽번호
+      const strip=v=>ns(v||'').replace(/\(이상[\d,]+명\)$/,'');
+      if(/^\(이상[\d,]+명\)$/.test(ns(txt))) continue; // 구분별 합계 표시
+      if(rec.subject && rec.newPlace && rec.oldPlace) recs.push({section, subject:ns(rec.subject), newPlace:strip(rec.newPlace), name:strip(rec.name), oldPlace:strip(rec.oldPlace), page:pi+1});
+      else if(recs.length && !rec.subject && (rec.newPlace||rec.oldPlace) && recs[recs.length-1].page===pi+1){ // 줄바꿈된 칸
+        const r=recs[recs.length-1]; if(rec.newPlace) r.newPlace+=strip(rec.newPlace); if(rec.oldPlace) r.oldPlace+=strip(rec.oldPlace); if(rec.name) r.name+=strip(rec.name);
+      }
+    }
+  }
+  return recs;
+}
+async function pdfReadAppointments(buf, onProgress){
+  const doc=await pdfOpen(buf); const all=[];
+  for(let i=0;i<doc.pages.length;i++){ all.push(pdfLines(await pdfPageGlyphs(doc, doc.pages[i]))); if(onProgress && i%10===0) onProgress(i+1, doc.pages.length); }
+  return {pages:doc.pages.length, records:pdfAppointmentRecords(all)};
+}
+
+/* ---------- ZIP / XLSX 읽기 (외부 라이브러리 없이) ---------- */
+async function inflateRaw(u8){
+  const ds=new DecompressionStream('deflate-raw');
+  return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(ds)).arrayBuffer());
+}
+function unzip(buf){
+  const u8=new Uint8Array(buf), dv=new DataView(buf);
+  let e=-1; for(let i=u8.length-22;i>=Math.max(0,u8.length-22-65535);i--){ if(dv.getUint32(i,true)===0x06054b50){ e=i; break; } }
+  if(e<0) throw new Error('엑셀(xlsx) 파일이 아닙니다.');
+  const count=dv.getUint16(e+10,true); let p=dv.getUint32(e+16,true);
+  const files=new Map(); const td=new TextDecoder();
+  for(let k=0;k<count;k++){
+    if(dv.getUint32(p,true)!==0x02014b50) throw new Error('손상된 파일입니다.');
+    const method=dv.getUint16(p+10,true), csize=dv.getUint32(p+20,true), nlen=dv.getUint16(p+28,true), xlen=dv.getUint16(p+30,true), clen=dv.getUint16(p+32,true), lho=dv.getUint32(p+42,true);
+    const name=td.decode(u8.subarray(p+46,p+46+nlen)).replace(/^\/+/,'');
+    files.set(name.toLowerCase(),{name,method,csize,lho}); p+=46+nlen+xlen+clen;
+  }
+  return async (name)=>{
+    const f=files.get(name.replace(/^\/+/,'').toLowerCase()); if(!f) return null;
+    const start=f.lho+30+dv.getUint16(f.lho+26,true)+dv.getUint16(f.lho+28,true);
+    const data=u8.subarray(start,start+f.csize);
+    const raw = f.method===0 ? data : f.method===8 ? await inflateRaw(data) : null;
+    if(!raw) throw new Error('지원하지 않는 압축 방식입니다.');
+    return td.decode(raw);
+  };
+}
+const REL_NS='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+const byTag=(node,name)=>Array.from(node.getElementsByTagNameNS('*',name));
+function parseXml(s){ const d=new DOMParser().parseFromString(s,'application/xml'); if(d.getElementsByTagName('parsererror').length) throw new Error('XML 형식 오류'); return d; }
+function textOf(si){ return byTag(si,'t').filter(t=>t.parentNode.localName!=='rPh').map(t=>t.textContent).join(''); }
+function resolveTarget(t){ if(t.startsWith('/')) return t.slice(1); const parts=('xl/'+t).split('/'); const out=[]; for(const x of parts){ if(x==='..') out.pop(); else if(x!=='.') out.push(x); } return out.join('/'); }
+async function readWorkbook(buf){
+  const get=unzip(buf);
+  const wbx=await get('xl/workbook.xml'); if(!wbx) throw new Error('엑셀 통합문서 정보를 찾을 수 없습니다.');
+  const wb=parseXml(wbx), rels=parseXml(await get('xl/_rels/workbook.xml.rels'));
+  const relMap={}; for(const r of byTag(rels,'Relationship')) relMap[r.getAttribute('Id')]=r.getAttribute('Target');
+  const ssx=await get('xl/sharedStrings.xml'); const ss=ssx? byTag(parseXml(ssx),'si').map(textOf) : [];
+  const sheets=[];
+  for(const s of byTag(wb,'sheet')){
+    const rid=s.getAttributeNS(REL_NS,'id')||s.getAttribute('r:id');
+    const target=relMap[rid]; if(!target) continue;
+    const xml=await get(resolveTarget(target)); if(!xml) continue;
+    const doc=parseXml(xml); const cells=new Map();
+    for(const c of byTag(doc,'c')){
+      const ref=c.getAttribute('r'); if(!ref) continue;
+      const t=c.getAttribute('t'); const v=byTag(c,'v')[0];
+      let val=null;
+      if(t==='inlineStr'){ const is=byTag(c,'is')[0]; val=is?textOf(is):''; }
+      else if(v){ val = t==='s' ? (ss[+v.textContent]??'') : v.textContent; }
+      if(val!=null) cells.set(ref,val);
+    }
+    sheets.push({name:s.getAttribute('name'), hidden:(s.getAttribute('state')||'visible')!=='visible', cells});
+  }
+  return sheets;
+}
+const SETTINGS_SHEET='_설정', SETTINGS_MARK='HR-HANDOUT-SETTINGS';
+async function parseHandoutWorkbook(buf){
+  const sheets=await readWorkbook(buf); const res=[];
+  const norm=v=>clean(v).replace(/\s+/g,'');
+  // 이 웹에서 만든 엑셀이면 숨김 설정 시트가 있음
+  let settings=null;
+  const ss=sheets.find(s=>s.name===SETTINGS_SHEET && clean(s.cells.get('A1'))===SETTINGS_MARK);
+  if(ss){
+    let json=''; for(let r=2; ss.cells.has('A'+r); r++) json+=ss.cells.get('A'+r);
+    try{ settings=JSON.parse(json); }catch{ settings=null; }
+  }
+  const lab = {...DEFAULT_LABELS, ...(settings?.labels||S.labels)};
+  const isNo = a => a===norm(lab.no) || a==='연번';
+  const isStats = a => a===norm(lab.stats) || a.startsWith('통계');
+  const isNotes = a => a===norm(lab.notes) || a.startsWith('특이');
+  const isSchool = a => a===norm(lab.schoolLabel) || a==='학교명';
+  for(const sh of sheets){
+    if(sh.hidden || sh===ss) continue;
+    const rows=new Map(); let maxRow=0;
+    for(const [ref,val] of sh.cells){ const m=/^([A-Z]+)(\d+)$/.exec(ref); if(!m) continue; const r=+m[2]; maxRow=Math.max(maxRow,r); if(!rows.has(r)) rows.set(r,{}); rows.get(r)[m[1]]=val; }
+    const A=r=>norm(rows.get(r)?.A);
+    let hr=0, sr=0, nr=0, schoolRow=0;
+    for(let r=1;r<=maxRow;r++){ const a=A(r); if(!a) continue; if(!hr && isNo(a)) hr=r; else if(hr && !sr && isStats(a)) sr=r; else if(sr && !nr && isNotes(a)) nr=r; if(!schoolRow && isSchool(a)) schoolRow=r; }
+    if(!hr) continue;
+    const school=clean(rows.get(schoolRow||3)?.C);
+    const out=[];
+    for(let r=hr+2; r<(sr||maxRow+1); r++){
+      const x=rows.get(r)||{};
+      const rec={subject:clean(x.B),reqType:clean(x.C),reqName:clean(x.D),reqTo:clean(x.E),resType:clean(x.F),resName:clean(x.G),resFrom:clean(x.H),note:clean(x.J)};
+      if(rowFilled(rec)) out.push(rec);
+    }
+    res.push({sheet:sh.name, school, rows:out, notes: nr? (rows.get(nr)?.B==null?'':String(rows.get(nr).B).replace(/\r\n?/g,'\n').replace(/ /g,' ').trim()) : ''});
+  }
+  if(!res.length) throw new Error('유인물 형식의 시트(연번 머리글)를 찾지 못했습니다.');
+  return {sheets:res, settings};
+}
+
+/* ---------- ZIP 쓰기 / XLSX 만들기 ---------- */
+const CRC_TABLE=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(b){ let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c=CRC_TABLE[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function zipStore(files){
+  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
+  const d=new Date(); const tm=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1); const dt=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  for(const f of files){
+    const nm=enc.encode(f.name), data=typeof f.data==='string'?enc.encode(f.data):f.data, crc=crc32(data), len=data.length;
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint16(6,0x0800,true); lh.setUint16(8,0,true); lh.setUint16(10,tm,true); lh.setUint16(12,dt,true);
+    lh.setUint32(14,crc,true); lh.setUint32(18,len,true); lh.setUint32(22,len,true); lh.setUint16(26,nm.length,true); lh.setUint16(28,0,true);
+    parts.push(new Uint8Array(lh.buffer), nm, data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true); ch.setUint16(8,0x0800,true); ch.setUint16(10,0,true); ch.setUint16(12,tm,true); ch.setUint16(14,dt,true);
+    ch.setUint32(16,crc,true); ch.setUint32(20,len,true); ch.setUint32(24,len,true); ch.setUint16(28,nm.length,true); ch.setUint32(42,off,true);
+    central.push(new Uint8Array(ch.buffer), nm);
+    off+=30+nm.length+len;
+  }
+  const cdSize=central.reduce((a,b)=>a+b.length,0);
+  const eo=new DataView(new ArrayBuffer(22));
+  eo.setUint32(0,0x06054b50,true); eo.setUint16(8,files.length,true); eo.setUint16(10,files.length,true); eo.setUint32(12,cdSize,true); eo.setUint32(16,off,true);
+  return new Blob([...parts,...central,new Uint8Array(eo.buffer)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+const xesc=s=>String(s??'').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function colName(c){ let s=''; while(c>0){ const m=(c-1)%26; s=String.fromCharCode(65+m)+s; c=Math.floor((c-1)/26); } return s; }
+function buildXlsx(){
+  // 스타일 레지스트리
+  const fonts=['<font><sz val="10"/><color rgb="FF000000"/><name val="맑은 고딕"/><family val="3"/><charset val="129"/></font>',
+               '<font><b/><sz val="17"/><color rgb="FF000000"/><name val="맑은 고딕"/><family val="3"/><charset val="129"/></font>',
+               '<font><b/><sz val="12"/><color rgb="FF000000"/><name val="맑은 고딕"/><family val="3"/><charset val="129"/></font>'];
+  const fills=['<fill><patternFill patternType="none"/></fill>','<fill><patternFill patternType="gray125"/></fill>',
+               '<fill><patternFill patternType="solid"><fgColor rgb="FFDFE6F7"/><bgColor indexed="64"/></patternFill></fill>',
+               '<fill><patternFill patternType="solid"><fgColor rgb="FFFFF7CC"/><bgColor indexed="64"/></patternFill></fill>'];
+  const borders=['<border><left/><right/><top/><bottom/><diagonal/></border>']; const bMap=new Map([['||||',0]]);
+  const xfs=['<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>']; const xMap=new Map();
+  const side=(n,s)=> s? `<${n} style="${s}"><color auto="1"/></${n}>` : `<${n}/>`;
+  function borderId(l,r,t,b){ const k=[l,r,t,b].join('|'); if(!bMap.has(k)){ bMap.set(k,borders.length); borders.push(`<border>${side('left',l)}${side('right',r)}${side('top',t)}${side('bottom',b)}<diagonal/></border>`); } return bMap.get(k); }
+  function style({font=0,fill=0,b=[ '','','','' ],h='center',v='center',wrap=false,shrink=false}){
+    const bid=borderId(...b); const k=[font,fill,bid,h,v,wrap,shrink].join('|');
+    if(!xMap.has(k)){ xMap.set(k,xfs.length); xfs.push(`<xf numFmtId="0" fontId="${font}" fillId="${fill}" borderId="${bid}" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="${h}" vertical="${v}"${wrap?' wrapText="1"':''}${shrink?' shrinkToFit="1"':''}/></xf>`); }
+    return xMap.get(k);
+  }
+  const L=S.labels, st=S.stats;
+  const used=new Set(); const sheetNames=S.schools.map(s=>{ let base=sanitizeSheetName(s.short||s.name)||'시트'; let nm=base, k=2; while(used.has(nm.toLowerCase())) nm=(base.slice(0,28)+'_'+k++); used.add(nm.toLowerCase()); return nm; });
+  const sheetXml=[], defNames=[];
+  S.schools.forEach((sc,si)=>{
+    const rows=sortRows(filledRows(sc.id)); const notes=notesOut(S.data[sc.id]?.notes||'');
+    const n=Math.max(BASE_ROWS, rows.length);
+    const D1=6, DE=5+n, s1=DE+1, s2=DE+2, s3=DE+3, t1=DE+4, t3=DE+6;
+    const grid=new Map(); // ref -> {v, s, f, num}
+    const put=(r,c,v,opt={},extra={})=>{ grid.set(r*100+c,{r,c,v,s:style(opt),...extra}); };
+    const bd=(r,c)=>{
+      const thin='thin', med='medium';
+      const inTable=r>=4 && r<=t3; if(!inTable) return ['','','',''];
+      const l = c===1 ? med : (c===6 && r<s1) ? med : thin;
+      const rr = c===11 ? med : (c===5 && r<s1) ? med : thin;
+      const t = (r===4||r===s1||r===t1) ? med : thin;
+      const b = (r===t3||r===5||r===DE||r===s3) ? med : thin;
+      return [l,rr,t,b];
+    };
+    const merges=[];
+    const area=(r1,c1,r2,c2,v,opt,extra)=>{ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) put(r,c,(r===r1&&c===c1)?v:null,{...opt,b:bd(r,c)},(r===r1&&c===c1)?extra:{}); if(r1!==r2||c1!==c2) merges.push(`${colName(c1)}${r1}:${colName(c2)}${r2}`); };
+    const blue={fill:2}, yel={fill:3};
+    area(1,2,1,10,L.title,{font:1});
+    area(3,1,3,2,L.schoolLabel,{font:2,h:'left'}); area(3,3,3,5,sc.name,{font:2,h:'left'}); area(3,7,3,11,L.org,{font:2,h:'right'});
+    area(4,1,5,1,L.no,blue); area(4,2,4,5,L.reqGroup,blue); area(4,6,4,11,L.resGroup,blue);
+    [L.reqSubject,L.reqType,L.reqName,L.reqTo,L.resType,L.resName].forEach((t,i)=>area(5,2+i,5,2+i,t,blue));
+    area(5,8,5,9,L.resFrom,blue); area(5,10,5,11,L.resNote,blue);
+    for(let i=0;i<n;i++){
+      const r=D1+i, x=rows[i]||{};
+      area(r,1,r,1,i+1,blue,{num:true});
+      area(r,2,r,2,x.subject,{...yel,shrink:true}); area(r,3,r,3,x.reqType,{...yel,shrink:true}); area(r,4,r,4,x.reqName,{...yel,shrink:true}); area(r,5,r,5,x.reqTo,{...yel,shrink:true});
+      area(r,6,r,6,x.resType,{shrink:true}); area(r,7,r,7,x.resName,{shrink:true}); area(r,8,r,9,x.resFrom,{shrink:true}); area(r,10,r,11,x.note,{shrink:true});
+    }
+    const stv=computeStats(rows);
+    area(s1,1,s3,1,L.stats,{...blue,wrap:true});
+    const rng=(c)=>`$${c}$${D1}:$${c}$${DE}`;
+    for(let i=0;i<6;i++){
+      const lab=st.single[i]||''; const c=2+i;
+      area(s1,c,s2,c,lab,{...blue,shrink:true});
+      area(s3,c,s3,c, stv.single[i]?.n??0, {}, lab?{f:`COUNTIF(${rng('F')},${colName(c)}${s1})`,num:true}:{num:true});
+    }
+    area(s1,8,s1,9,st.unassigned,blue); area(s1,10,s1,11,st.tempLabel,blue);
+    area(s2,8,s2,8,st.unassignedBy[0]||'',blue); area(s2,9,s2,9,st.unassignedBy[1]||'',blue);
+    area(s2,10,s2,10,st.temp[0]?.label||'',blue); area(s2,11,s2,11,st.temp[1]?.label||'',blue);
+    area(s3,8,s3,8,stv.unassigned[0]?.n??0,blue,{f:`COUNTIFS(${rng('C')},H$${s2},${rng('F')},$H$${s1})`,num:true});
+    area(s3,9,s3,9,stv.unassigned[1]?.n??0,blue,{f:`COUNTIFS(${rng('C')},I$${s2},${rng('F')},$H$${s1})`,num:true});
+    const q=s=>'"'+String(s).replace(/"/g,'""')+'"';
+    area(s3,10,s3,10,stv.temp[0]?.n??0,blue,{f:`COUNTIF($J$${D1}:$K$${DE},${q(st.temp[0]?.match||'')})`,num:true});
+    area(s3,11,s3,11,stv.temp[1]?.n??0,blue,{f:`COUNTIF($J$${D1}:$K$${DE},${q(st.temp[1]?.match||'')})`,num:true});
+    area(t1,1,t3,1,L.notes,{...blue,wrap:true});
+    area(t1,2,t3,11,notes,{h:'left',wrap:true});
+    // XML
+    const heights={1:24.9,2:8.25,3:22.05,4:16.75,5:16.75}; heights[s1]=16.75; heights[s3]=21;
+    const noteLines=notes? notes.split('\n').reduce((a,l)=>a+Math.max(1,Math.ceil(l.length/62)),0):0;
+    if(noteLines>3){ const per=Math.min(40,noteLines*13.5/3); heights[t1]=heights[t1+1]=heights[t3]=per; }
+    let sd='';
+    for(let r=1;r<=t3;r++){
+      const cells=[...grid.values()].filter(x=>x.r===r).sort((a,b)=>a.c-b.c);
+      const ht=heights[r]; sd+=`<row r="${r}"${ht?` ht="${ht}" customHeight="1"`:''}>`;
+      for(const x of cells){
+        const ref=colName(x.c)+r;
+        if(x.f) sd+=`<c r="${ref}" s="${x.s}"><f>${xesc(x.f)}</f><v>${Number(x.v)||0}</v></c>`;
+        else if(x.v==null || x.v==='') sd+=`<c r="${ref}" s="${x.s}"/>`;
+        else if(x.num) sd+=`<c r="${ref}" s="${x.s}"><v>${Number(x.v)}</v></c>`;
+        else sd+=`<c r="${ref}" s="${x.s}" t="inlineStr"><is><t xml:space="preserve">${xesc(x.v)}</t></is></c>`;
+      }
+      sd+='</row>';
+    }
+    const cols=COLW.map((w,i)=>`<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join('');
+    sheetXml.push(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="${REL_NS}"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:K${t3}"/><sheetViews><sheetView workbookViewId="0"${si===0?' tabSelected="1"':''}/></sheetViews><sheetFormatPr defaultRowHeight="16.4" customHeight="1"/><cols>${cols}</cols><sheetData>${sd}</sheetData><mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join('')}</mergeCells><printOptions horizontalCentered="1"/><pageMargins left="0.394" right="0.394" top="0.59" bottom="0.59" header="0" footer="0"/><pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="1"/></worksheet>`);
+    defNames.push(`<definedName name="_xlnm.Print_Area" localSheetId="${si}">'${xesc(sheetNames[si].replace(/'/g,"''"))}'!$A$1:$K$${t3}</definedName>`);
+  });
+  // 숨김 설정 시트(다른 기기에서 엑셀을 올리면 설정까지 복원)
+  const settingsObj={format:'hr-handout-settings',v:1,updatedAt:S.updatedAt||new Date().toISOString(),labels:S.labels,
+    schools:S.schools.map((s,i)=>({...s,sheet:sheetNames[i]})),subjects:S.subjects,reqTypes:S.reqTypes,resTypes:S.resTypes,noteOptions:S.noteOptions,stats:S.stats,summary:S.summary,subjectAliases:S.subjectAliases};
+  const sj=JSON.stringify(settingsObj); const chunks=[]; for(let i=0;i<sj.length;i+=30000) chunks.push(sj.slice(i,i+30000));
+  const cellT=(ref,t)=>`<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xesc(t)}</t></is></c>`;
+  sheetXml.push(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1">${cellT('A1',SETTINGS_MARK)}${cellT('B1','이 시트는 웹앱 설정 정보입니다. 수정하거나 지우지 마세요.')}</row>${chunks.map((c,i)=>`<row r="${i+2}">${cellT('A'+(i+2),c)}</row>`).join('')}</sheetData></worksheet>`);
+  sheetNames.push(SETTINGS_SHEET);
+  const files=[];
+  files.push({name:'[Content_Types].xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheetXml.map((_,i)=>`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`});
+  files.push({name:'_rels/.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`});
+  const now=new Date().toISOString().replace(/\.\d+Z$/,'Z');
+  files.push({name:'docProps/core.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>인사 발령 유인물</dc:title><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`});
+  files.push({name:'docProps/app.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Microsoft Excel</Application></Properties>`});
+  files.push({name:'xl/workbook.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="${REL_NS}"><bookViews><workbookView xWindow="0" yWindow="0" windowWidth="25000" windowHeight="15000" tabRatio="900"/></bookViews><sheets>${sheetNames.map((nm,i)=>`<sheet name="${xesc(nm)}" sheetId="${i+1}"${nm===SETTINGS_SHEET?' state="hidden"':''} r:id="rId${i+1}"/>`).join('')}</sheets><definedNames>${defNames.join('')}</definedNames><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`});
+  files.push({name:'xl/_rels/workbook.xml.rels',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheetNames.map((_,i)=>`<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('')}<Relationship Id="rId${sheetNames.length+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`});
+  sheetXml.forEach((x,i)=>files.push({name:`xl/worksheets/sheet${i+1}.xml`,data:x}));
+  files.push({name:'xl/styles.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="${fonts.length}">${fonts.join('')}</fonts><fills count="${fills.length}">${fills.join('')}</fills><borders count="${borders.length}">${borders.join('')}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join('')}</cellXfs><cellStyles count="1"><cellStyle name="표준" xfId="0" builtinId="0"/></cellStyles></styleSheet>`});
+  return zipStore(files);
+}
+function downloadXlsx(){
+  try{
+    const blob=buildXlsx();
+    saveBlob(blob, `인사발령유인물_${stamp()}.xlsx`);
+  }catch(e){ console.error(e); alert('엑셀 파일을 만들지 못했습니다: '+e.message); }
+}
+
+/* ---------- 암호화 ---------- */
+const ITER=310000; const te=new TextEncoder(), tdc=new TextDecoder();
+function b64(u8){ let s=''; for(let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000)); return btoa(s); }
+function unb64(s){ const bin=atob(s.replace(/\s+/g,'')); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
+async function deriveKey(pass, salt){
+  const base=await crypto.subtle.importKey('raw', te.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:ITER,hash:'SHA-256'}, base, {name:'AES-GCM',length:256}, false, ['encrypt','decrypt']);
+}
+async function encryptJson(obj, pass){
+  const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
+  const key=await deriveKey(pass, salt);
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, te.encode(JSON.stringify(obj))));
+  return JSON.stringify({format:'hr-handout-backup-encrypted',v:1,kdf:{name:'PBKDF2',hash:'SHA-256',iterations:ITER},cipher:'AES-GCM-256',salt:b64(salt),iv:b64(iv),data:b64(ct)});
+}
+async function decryptJson(env, pass){
+  if(!pass) throw new Error('비밀번호를 입력하세요.');
+  const key=await deriveKey(pass, unb64(env.salt));
+  try{ const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(env.iv)}, key, unb64(env.data)); return JSON.parse(tdc.decode(pt)); }
+  catch{ throw new Error('비밀번호가 맞지 않습니다.'); }
+}
+
+/* ---------- 시작 ---------- */
+loadLocal();
+currentId=S.schools[0]?.id;
+renderApp();
+</script>
+</body>
+</html>
