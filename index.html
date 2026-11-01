@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Q1l4BjwdWqEH/BT9w+KTzKlJmjRnbQ/6dEfYnQqRe+4='; style-src 'unsafe-inline'; connect-src 'none'; img-src data: blob:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-FCSRPGY7RCqbaKmZJt+6gI2bd+ijcvghHmsoM1WzD+o='; style-src 'unsafe-inline'; connect-src 'none'; img-src data: blob:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 <title>인사 발령 유인물</title>
@@ -36,6 +36,7 @@ header.top .spacer{flex:1}
 .status.saving,.status.dirty{background:#fff4e0;color:var(--warn)}
 .status.error{background:#fbe7e5;color:var(--danger)}
 .gear{font-size:18px;padding:4px 10px}
+.apdate{font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:3px 9px;white-space:nowrap}
 
 .body{display:grid;grid-template-columns:250px 1fr;min-height:0}
 aside.side{background:#fff;border-right:1px solid var(--line);overflow:auto;padding:10px 8px 30px}
@@ -197,11 +198,12 @@ const LABEL_NAMES = {
   reqSubject:'소요 - 교과', reqType:'소요 - 구분', reqName:'소요 - 성명', reqTo:'소요 - 발령교',
   resType:'발령 - 구분', resName:'발령 - 성명', resFrom:'발령 - 전임교', resNote:'발령 - 비고', stats:'통계자료', notes:'특이사항'
 };
-const BASE_ROWS = 35;
+const BASE_ROWS = 35; // 이 행 수를 넘으면 줄 간격을 줄여 A4 한 장에 맞춤
+const outputRowCount = filled => filled + 1; // 입력한 행 + 빈 행 1개
 
 function defaultSummary(){
   return {
-    title:'2026.3.1.자 중등교사 인사 현황', nameMode:'name', outLabel:'교사 전출', inLabel:'교사 전입', totalLabel:'계', balanceLabel:'결충원', excludeSubjects:['영양','사서'],
+    title:'{날짜}자 중등교사 인사 현황', nameMode:'name', outLabel:'교사 전출', inLabel:'교사 전입', totalLabel:'계', balanceLabel:'결충원', excludeSubjects:['영양','사서'],
     out:[
       {label:'관내', req:['관내'], exclRes:['미발령']},
       {label:'청간', req:['청간'], exclRes:['미발령']},
@@ -220,6 +222,9 @@ function defaultSummary(){
     ]
   };
 }
+// 인사 발령 일자: 2026.3.1. 형식
+function apptStr(){ const a=S.apptDate||{y:2026,m:3,d:1}; return `${a.y}.${a.m}.${a.d}.`; }
+const withDate = t => String(t||'').replace(/\{날짜\}/g, apptStr());
 function uid(){ return (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()).replace(/-/g,'').slice(0,16); }
 function defaultState(){
   return {
@@ -233,6 +238,7 @@ function defaultState(){
     subjectAliases: DEFAULT_ALIASES.map(([from,to])=>({from,to})),
     rosterRecs:[], pdfRecs:[], pdfInfo:null,
     summary: defaultSummary(),
+    apptDate: {y:2026, m:3, d:1},
     stats:{ single:['관내','청간','파견복귀','타시도전입','복직','신규'], unassigned:'미발령', unassignedBy:['관내','청간'],
             tempLabel:'기간제', temp:[{label:'정원외',match:'정원외 기간제'},{label:'미배치',match:'미배치 기간제'}] },
     data:{}, updatedAt:null
@@ -247,6 +253,8 @@ function normalizeState(s){
   for(const k of ['subjects','reqTypes','resTypes','noteOptions']) if(!Array.isArray(out[k])) out[k]=d[k];
   if(!Array.isArray(out.subjectAliases)) out.subjectAliases = d.subjectAliases;
   if(!out.summary || !Array.isArray(out.summary.out)) out.summary=defaultSummary();
+  if(!out.apptDate || !out.apptDate.y) out.apptDate={y:2026,m:3,d:1};
+  if(out.summary.title && !out.summary.title.includes('{날짜}')) out.summary.title=out.summary.title.replace(/^\s*\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.?/,'{날짜}');
   if(!Array.isArray(out.rosterRecs)) out.rosterRecs=[];
   if(!Array.isArray(out.pdfRecs)) out.pdfRecs=[];
   if(!Array.isArray(out.schools) || !out.schools.length) out.schools = d.schools;
@@ -354,6 +362,7 @@ function renderApp(){
   app.append(
     h('header',{class:'top'},
       h('h1',{text:'인사 발령 유인물'}),
+      h('span',{class:'apdate',title:'⚙ 설정 → 발령 일자에서 바꿀 수 있습니다',text:apptStr()+'자'}),
       h('span',{id:'status',class:'status'}),
       h('div',{class:'spacer'}),
       h('button',{onclick:()=>openPreview([currentId])},'미리보기'),
@@ -399,7 +408,7 @@ function renderMain(){
     h('button',{class:'primary',onclick:()=>{ d.rows.push(blankRow()); markChanged(); renderMain(); focusLastRow(); }},'+ 행 추가'),
     h('button',{onclick:()=>{ const r=fillFromForSchools([sc.id]); renderMain(); toast(fillMsg(r), 4000); }},'전임교 자동 입력'),
     h('button',{onclick:()=>{ d.rows=sortRows(d.rows.filter(rowFilled)); markChanged(); renderMain(); toast('교과 → 구분 → 성명 순으로 정렬했습니다.'); }},'정렬 (교과→구분→성명)'),
-    h('span',{class:'note',text: n>BASE_ROWS ? `입력 ${n}행 · 기본 틀(${BASE_ROWS}행)을 넘어 출력 시 한 장에 맞춰 줄 간격이 줄어듭니다.` : `입력 ${n}행 / 기본 틀 ${BASE_ROWS}행 · 출력과 엑셀은 자동으로 정렬됩니다.`})
+    h('span',{class:'note',text: n+1>BASE_ROWS ? `입력 ${n}행 · 출력 시 연번 ${n+1}까지 나오며, A4 한 장에 맞춰 줄 간격이 자동으로 줄어듭니다.` : `입력 ${n}행 · 출력물에는 연번 ${n+1}까지(빈 행 1개) 나오고 바로 통계·특이사항이 이어집니다. 출력과 엑셀은 자동 정렬됩니다.`})
   ));
   const thead=h('thead',null,
     h('tr',null, h('th',{rowspan:2,text:L.no}), h('th',{colspan:4,class:'grp',text:L.reqGroup}), h('th',{colspan:4,class:'grp sep',text:L.resGroup}), h('th',{rowspan:2,style:'background:#fff;border:0'})),
@@ -481,7 +490,7 @@ const PAGE_H_PT = 267*PT_PER_MM;
 const H = {title:24.9, gap:8.25, school:22.05, head:16.75, row:16.4, stat1:16.75, stat2:16.4, stat3:21, note:16.4};
 function buildPage(school){
   const L=S.labels; const rows=sortRows(filledRows(school.id)); const notes=(S.data[school.id]?.notes)||'';
-  const n=Math.max(BASE_ROWS, rows.length);
+  const n=outputRowCount(rows.length);
   const fixed=H.title+H.gap+H.school+H.head*2+H.stat1+H.stat2+H.stat3+H.note*3;
   const rowH=Math.min(H.row, (PAGE_H_PT-fixed-2)/n);
   const fs=Math.min(10, rowH*0.62);
@@ -558,12 +567,12 @@ function openPreview(ids){
 }
 
 /* ---------- 설정 모드 ---------- */
-let settingsTab='schools';
+let settingsTab='general';
 function openSettings(tab){
   if(tab) settingsTab=tab;
   const close=()=>{ ov.remove(); renderApp(); };
   const nav=h('nav'); const pane=h('div',{class:'pane'});
-  const tabs=[['schools','학교 관리'],['subjects','교과'],['types','구분 (소요·발령)'],['notes','비고 항목'],['labels','메뉴명'],['stats','통계 기준'],['backup','저장·불러오기'],['roster_g','관내 명부'],['roster_c','청간 명부'],['pdf','청간 발령(PDF)'],['upload','파일 탑재'],['summary','통계 파일'],['reset','초기화']];
+  const tabs=[['general','발령 일자'],['schools','학교 관리'],['subjects','교과'],['types','구분 (소요·발령)'],['notes','비고 항목'],['labels','메뉴명'],['stats','통계 기준'],['backup','저장·불러오기'],['roster_g','관내 명부'],['roster_c','청간 명부'],['pdf','청간 발령(PDF)'],['upload','파일 탑재'],['summary','통계 파일'],['reset','초기화']];
   const draw=()=>{
     nav.replaceChildren(...tabs.map(([k,t])=>h('button',{class:k===settingsTab?'on':'',onclick:()=>{ settingsTab=k; draw(); }},t)));
     pane.replaceChildren(); (PANES[settingsTab]||PANES.schools)(pane, draw);
@@ -601,6 +610,29 @@ function listEditor(arr, {onRename, onDelete, placeholder}={}, redraw){
   return box;
 }
 const PANES = {
+  general(p, redraw){
+    const a=S.apptDate;
+    p.append(h('h4',{text:'인사 발령 일자'}),
+      h('p',{class:'help',text:'이번 인사 발령의 기준 일자입니다. 화면 위쪽, 통계 파일 제목, 내려받는 파일 이름에 「2026.3.1.」 형식으로 자동 들어가고, 도교육청 발령 PDF를 올릴 때 PDF의 일자와 다르면 알려줍니다.'}));
+    const ys=h('select',null, Array.from({length:12},(_,i)=>2024+i).map(y=>h('option',{value:y},y+'년')));
+    const ms=h('select',null, Array.from({length:12},(_,i)=>i+1).map(m=>h('option',{value:m},m+'월')));
+    const ds=h('select',null, Array.from({length:31},(_,i)=>i+1).map(d=>h('option',{value:d},d+'일')));
+    if(![...ys.options].some(o=>+o.value===a.y)) ys.append(h('option',{value:a.y},a.y+'년'));
+    ys.value=a.y; ms.value=a.m; ds.value=a.d;
+    const prev=h('div',{class:'apdate',style:'display:inline-block;font-size:18px;margin-top:10px'});
+    const upd=()=>{ S.apptDate={y:+ys.value,m:+ms.value,d:+ds.value}; prev.textContent=apptStr()+'자'; markChanged(); };
+    [ys,ms,ds].forEach(x=>x.addEventListener('change',upd));
+    prev.textContent=apptStr()+'자';
+    p.append(h('div',{class:'row-btns'}, ys, ms, ds,
+      h('button',{onclick:()=>{ ms.value=3; ds.value=1; upd(); }},'3월 1일'),
+      h('button',{onclick:()=>{ ms.value=9; ds.value=1; upd(); }},'9월 1일')),
+      prev,
+      h('div',{class:'box'}, h('b',{text:'자동으로 적용되는 곳'}), h('ol',null,
+        h('li',{text:'화면 위쪽 제목 옆 표시'}),
+        h('li',{text:'통계 파일 제목 (예: 2026.3.1.자 중등교사 인사 현황) — ⚙ 통계 파일의 제목에서 {날짜} 자리'}),
+        h('li',{text:'내려받는 파일 이름 (유인물 엑셀, 통계 파일, 백업 파일)'}),
+        h('li',{text:'청간 발령(PDF) 업로드 시 PDF 표지의 발령 일자와 비교'}))));
+  },
   schools(p, redraw){
     p.append(h('h4',{text:'학교 관리'}), h('p',{class:'help',text:'왼쪽 목록에 보이는 학교입니다. 정식명칭은 화면·출력물에, 시트명은 엑셀 다운로드 시 시트 이름(31자 이내)으로 쓰입니다. 순서는 목록과 엑셀 시트 순서가 됩니다.'}));
     const tb=h('tbody');
@@ -760,7 +792,7 @@ function renderBackupPane(p){
     try{
       const payload={format:'hr-handout-backup',v:1,savedAt:new Date().toISOString(),state:S};
       const text = pw.value ? await encryptJson(payload, pw.value) : JSON.stringify(payload);
-      saveBlob(new Blob([text],{type:'application/json'}), `인사발령유인물_백업_${stamp()}${pw.value?'_암호':''}.json`);
+      saveBlob(new Blob([text],{type:'application/json'}), `인사발령유인물_백업(${apptStr()}자)_${stamp()}${pw.value?'_암호':''}.json`);
       msg.textContent = pw.value ? '암호화된 백업 파일을 저장했습니다. 비밀번호를 잊으면 열 수 없습니다.' : '백업 파일을 저장했습니다. 개인정보가 들어 있으니 보관에 유의하세요.';
       pw.value=''; pw2.value='';
     }catch(e){ msg.style.color='var(--danger)'; msg.textContent='저장하지 못했습니다: '+e.message; }
@@ -816,9 +848,9 @@ function renderSummaryPane(p, redraw){
   const sm=S.summary;
   p.append(h('h4',{text:'통계 파일'}),
     h('p',{class:'help',text:'학교별 교사 전출(소요사항 기준)·전입(발령사항 기준) 현황을 엑셀로 내려받습니다. 결충원 확인 열은 「전입 계 − 전출 계」이며 0이 아니면 표에 빨간색으로 표시됩니다.'}));
-  const title=h('input',{value:sm.title,style:'width:340px'}); title.addEventListener('change',()=>{ sm.title=title.value; markChanged(); });
+  const title=h('input',{value:sm.title,style:'width:340px'}); const tprev=h('div',{class:'small',text:'→ '+withDate(sm.title)}); title.addEventListener('change',()=>{ sm.title=title.value; tprev.textContent='→ '+withDate(sm.title); markChanged(); });
   const nm=h('select',null,h('option',{value:'name'},'정식명칭 (○○중학교)'),h('option',{value:'short'},'시트명 (○○중)')); nm.value=sm.nameMode; nm.addEventListener('change',()=>{ sm.nameMode=nm.value; markChanged(); redraw(); });
-  p.append(h('div',{class:'form'}, h('label',{text:'제목'}), title, h('label',{text:'학교명 표시'}), nm),
+  p.append(h('div',{class:'form'}, h('label',{text:'제목'}), h('div',null,title,tprev,h('div',{class:'small',text:'{날짜} 자리에 발령 일자가 들어갑니다.'})), h('label',{text:'학교명 표시'}), nm),
     h('div',{class:'row-btns'}, h('button',{class:'primary',onclick:downloadSummaryXlsx},'통계 파일 다운로드 (.xlsx)')));
   // 미리보기
   const rows=summaryRows(); const tot=k=>rows.reduce((a,r)=>a+(typeof k==='function'?k(r):r[k]),0);
@@ -865,7 +897,7 @@ function downloadSummaryXlsx(){
   const put=(r,c,v,o={},f)=>cells.set(r*1000+c,{r,c,v,f,s:st({...o,b:bd(r,c)})});
   const area=(r1,c1,r2,c2,v,o)=>{ for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++) put(r,c,(r===r1&&c===c1)?v:null,o); if(r1!==r2||c1!==c2) merges.push(`${colName(c1)}${r1}:${colName(c2)}${r2}`); };
   const hd={fill:2,font:2,wrap:true};
-  area(1,1,1,lastCol-1,sm.title,{font:1});
+  area(1,1,1,lastCol-1,withDate(sm.title),{font:1});
   area(3,1,4,1,'연번',hd); area(3,2,4,2,'학교명',hd); area(3,3,3,cOutSum,sm.outLabel,hd); area(3,cIn,3,cInSum,sm.inLabel,hd); area(3,cBal,4,cBal,sm.balanceLabel,hd);
   sm.out.forEach((c,i)=>put(4,3+i,c.label,hd)); put(4,cOutSum,sm.totalLabel,{...hd,fill:4});
   sm.in.forEach((c,i)=>put(4,cIn+i,c.label,hd)); put(4,cInSum,sm.totalLabel,{...hd,fill:4});
@@ -906,7 +938,7 @@ function downloadSummaryXlsx(){
     {name:'xl/styles.xml',data:`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="${fonts.length}">${fonts.join('')}</fonts><fills count="${fills.length}">${fills.join('')}</fills><borders count="${borders.length}">${borders.join('')}</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="${xfs.length}">${xfs.join('')}</cellXfs><cellStyles count="1"><cellStyle name="표준" xfId="0" builtinId="0"/></cellStyles></styleSheet>`}
   ];
-  saveBlob(zipStore(files), `중등교사_인사현황_통계_${stamp()}.xlsx`);
+  saveBlob(zipStore(files), `중등교사_인사현황_통계(${apptStr()}자)_${stamp()}.xlsx`);
 }
 
 /* ---------- 초기화 ---------- */
@@ -1168,7 +1200,7 @@ function renderPdfPane(p, redraw){
     try{
       const r=await pdfReadAppointments(await f.arrayBuffer(), (i,n)=>{ msg.textContent=`PDF를 읽는 중… ${i}/${n}쪽`; });
       if(!r.records.length) throw new Error('발령 표(교과·신임지·성명·전임지)를 찾지 못했습니다.');
-      pdfCache={fileName:f.name, records:r.records, pages:r.pages};
+      pdfCache={fileName:f.name, records:r.records, pages:r.pages, date:r.date};
       // 전임교 자동 입력용: 우리 지역으로 오거나 우리 학교에서 나가는 발령자만 기기에 저장
       S.pdfRecs=r.records.filter(x=>isOurPlace(x.newPlace)||isOurPlace(x.oldPlace)).map(x=>({section:x.section,subject:x.subject,name:x.name,newPlace:x.newPlace,oldPlace:x.oldPlace}));
       S.pdfInfo={fileName:f.name, savedAt:new Date().toISOString(), total:r.records.length}; markChanged(); saveLocal();
@@ -1263,8 +1295,9 @@ function showPdfPlan(out, redraw){
         draw();
       }},'소요사항 발령교에 반영')));
   };
-  out.replaceChildren(
-    h('div',{class:'box'}, `「${pdfCache.fileName}」 ${pdfCache.pages}쪽 · 발령 ${pdfCache.records.length}명을 읽었습니다.`,
+  const dateWarn = pdfCache.date && pdfCache.date!==apptStr() ? h('div',{class:'notice',text:`주의: PDF의 발령 일자는 ${pdfCache.date}인데, 설정한 발령 일자는 ${apptStr()}입니다. ⚙ 발령 일자를 확인하세요.`}) : null;
+  out.replaceChildren(dateWarn||'',
+    h('div',{class:'box'}, `「${pdfCache.fileName}」 ${pdfCache.pages}쪽 · 발령 ${pdfCache.records.length}명`+(pdfCache.date?` · ${pdfCache.date}자`:'')+'을 읽었습니다.',
       h('div',{style:'margin-top:8px;font-weight:700',text:'반영할 발령 구분'}), secBox,
       h('div',{style:'margin-top:10px;display:flex;flex-direction:column;gap:4px'},
         opt('strip','신임지 앞의 「경기도」 생략 (경기도수원교육지원청 → 수원교육지원청)'),
@@ -1555,7 +1588,10 @@ function pdfAppointmentRecords(pagesLines){
 async function pdfReadAppointments(buf, onProgress){
   const doc=await pdfOpen(buf); const all=[];
   for(let i=0;i<doc.pages.length;i++){ all.push(pdfLines(await pdfPageGlyphs(doc, doc.pages[i]))); if(onProgress && i%10===0) onProgress(i+1, doc.pages.length); }
-  return {pages:doc.pages.length, records:pdfAppointmentRecords(all)};
+  // 표지(첫 쪽)에서 발령 일자 찾기: 「2026. 3. 1.」 → 2026.3.1.
+  let date=null; const first=(all[0]||[]).map(L=>L.g.map(g=>g.ch).join('')).join(' ');
+  const m=first.match(/(20\d{2})\s*\.\s*(\d{1,2})\s*\.\s*(\d{1,2})\s*\./); if(m) date=`${+m[1]}.${+m[2]}.${+m[3]}.`;
+  return {pages:doc.pages.length, records:pdfAppointmentRecords(all), date};
 }
 
 /* ---------- ZIP / XLSX 읽기 (외부 라이브러리 없이) ---------- */
@@ -1697,7 +1733,7 @@ function buildXlsx(){
   const sheetXml=[], defNames=[];
   S.schools.forEach((sc,si)=>{
     const rows=sortRows(filledRows(sc.id)); const notes=notesOut(S.data[sc.id]?.notes||'');
-    const n=Math.max(BASE_ROWS, rows.length);
+    const n=outputRowCount(rows.length);
     const D1=6, DE=5+n, s1=DE+1, s2=DE+2, s3=DE+3, t1=DE+4, t3=DE+6;
     const grid=new Map(); // ref -> {v, s, f, num}
     const put=(r,c,v,opt={},extra={})=>{ grid.set(r*100+c,{r,c,v,s:style(opt),...extra}); };
@@ -1794,7 +1830,7 @@ function buildXlsx(){
 function downloadXlsx(){
   try{
     const blob=buildXlsx();
-    saveBlob(blob, `인사발령유인물_${stamp()}.xlsx`);
+    saveBlob(blob, `인사발령유인물(${apptStr()}자)_${stamp()}.xlsx`);
   }catch(e){ console.error(e); alert('엑셀 파일을 만들지 못했습니다: '+e.message); }
 }
 
