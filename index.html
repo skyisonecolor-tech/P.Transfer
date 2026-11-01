@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-FCSRPGY7RCqbaKmZJt+6gI2bd+ijcvghHmsoM1WzD+o='; style-src 'unsafe-inline'; connect-src 'none'; img-src data: blob:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-x9xTUs0XcW6W8X+5O70/W8aDHrXtos36Q3AoEuoQqtY='; style-src 'unsafe-inline'; connect-src 'none'; img-src data: blob:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 <title>인사 발령 유인물</title>
@@ -66,6 +66,8 @@ table.ed td.sep, table.ed th.sep{border-left:2px solid #333}
 table.ed td input,table.ed td select{width:100%;border:0;border-radius:0;background:transparent;padding:4px 6px;height:30px;text-align:center}
 table.ed td input:focus,table.ed td select:focus{background:#fff;outline:2px solid #9db5ea}
 table.ed td input.auto{background:#e6f4ea}
+table.ed tr.moved td{animation:movedFlash 1.2s ease-out}
+@keyframes movedFlash{0%{box-shadow:inset 0 0 0 999px rgba(47,91,183,.18)}100%{box-shadow:inset 0 0 0 999px rgba(47,91,183,0)}}
 table.ed td.del{width:34px;text-align:center;border:0;background:transparent}
 table.ed td.del button{border:0;background:transparent;color:#999;padding:2px 6px}
 table.ed td.del button:hover{color:var(--danger)}
@@ -407,7 +409,9 @@ function renderMain(){
   main.append(h('div',{class:'toolbar'},
     h('button',{class:'primary',onclick:()=>{ d.rows.push(blankRow()); markChanged(); renderMain(); focusLastRow(); }},'+ 행 추가'),
     h('button',{onclick:()=>{ const r=fillFromForSchools([sc.id]); renderMain(); toast(fillMsg(r), 4000); }},'전임교 자동 입력'),
-    h('button',{onclick:()=>{ d.rows=sortRows(d.rows.filter(rowFilled)); markChanged(); renderMain(); toast('교과 → 구분 → 성명 순으로 정렬했습니다.'); }},'정렬 (교과→구분→성명)'),
+    h('button',{onclick:()=>{ d.rows=sortRows(d.rows.filter(rowFilled)); markChanged(); renderMain(); toast('이 학교를 교과 → 구분 → 성명 순으로 정렬했습니다.'); }},'이 학교 정렬'),
+    h('button',{onclick:()=>{ const n=sortAllSchools(); renderMain(); renderSidebar(); toast(`모든 학교(${n}곳)를 교과 → 구분 → 성명 순으로 정렬했습니다.`); }},'모든 학교 정렬'),
+    (()=>{ const cb=h('input',{type:'checkbox',checked:S.autoSort!==false}); cb.addEventListener('change',()=>{ S.autoSort=cb.checked; markChanged(); if(cb.checked){ d.rows=sortRows(d.rows); renderMain(); } }); return h('label',{class:'small',style:'display:flex;gap:4px;align-items:center',title:'한 행 입력을 마치고 다른 행으로 이동하면 자동으로 정렬합니다'},cb,'실시간 정렬'); })(),
     h('span',{class:'note',text: n+1>BASE_ROWS ? `입력 ${n}행 · 출력 시 연번 ${n+1}까지 나오며, A4 한 장에 맞춰 줄 간격이 자동으로 줄어듭니다.` : `입력 ${n}행 · 출력물에는 연번 ${n+1}까지(빈 행 1개) 나오고 바로 통계·특이사항이 이어집니다. 출력과 엑셀은 자동 정렬됩니다.`})
   ));
   const thead=h('thead',null,
@@ -438,6 +442,27 @@ function renderMain(){
   });
   if(!d.rows.length) tbody.append(h('tr',{class:'empty-row'}, h('td',{colspan:10,text:'입력된 내용이 없습니다. [+ 행 추가]를 눌러 시작하세요.'})));
   const cg=h('colgroup',null,[42,118,104,96,170,104,96,170,140,34].map(w=>h('col',{style:`width:${w}px`})));
+  // 실시간 정렬: 한 행을 입력하다가 다른 행(또는 바깥)으로 이동하면 정렬
+  tbody.addEventListener('focusout', e=>{
+    if(S.autoSort===false) return;
+    const tr=e.target.closest('tr[data-row]'); if(!tr) return;
+    setTimeout(()=>{
+      const act=document.activeElement;
+      if(act && tr.contains(act)) return; // 같은 행 안에서 이동 중
+      if(document.querySelector('.overlay')) return;
+      const before=d.rows.map(r=>r.id).join(',');
+      const sorted=sortRows(d.rows); const after=sorted.map(r=>r.id).join(',');
+      if(before===after) return;
+      // 포커스 위치 기억 후 다시 그리기
+      let focusRow=null, focusCol=-1;
+      const atr=act && act.closest && act.closest('table.ed tr[data-row]');
+      if(atr){ focusRow=atr.dataset.row; focusCol=[...atr.querySelectorAll('input,select')].indexOf(act); }
+      const moved=tr.dataset.row;
+      d.rows=sorted; markChanged(); renderMain();
+      const ntr=document.querySelector(`table.ed tr[data-row="${moved}"]`); if(ntr){ ntr.classList.add('moved'); setTimeout(()=>ntr.classList.remove('moved'),1200); }
+      if(focusRow){ const f=document.querySelector(`table.ed tr[data-row="${focusRow}"]`); f?.querySelectorAll('input,select')[focusCol]?.focus(); }
+    },0);
+  });
   main.append(h('table',{class:'ed'}, cg, thead, tbody));
   main.append(h('div',{id:'statsBox'}));
   renderStatsBox();
@@ -470,6 +495,7 @@ function renderNotesEditor(d){
   };
   draw(); return box;
 }
+function sortAllSchools(){ let n=0; for(const sc of S.schools){ const d=S.data[sc.id]; if(!d||!d.rows.length) continue; d.rows=sortRows(d.rows.filter(rowFilled)); n++; } markChanged(); return n; }
 function blankRow(){ return {id:uid(),subject:'',reqType:'',reqName:'',reqTo:'',resType:'',resName:'',resFrom:'',note:''}; }
 function focusLastRow(){ const rows=document.querySelectorAll('table.ed tbody tr'); const last=rows[rows.length-1]; last?.querySelector('select')?.focus(); }
 function renderStatsBox(){
